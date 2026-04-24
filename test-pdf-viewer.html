@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF.js Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+    <h1>PDF Viewer Test</h1>
+    <div>
+        <label>PDF URL:</label>
+        <input type="text" id="pdfUrl" style="width: 500px;" placeholder="Enter Cloudinary PDF URL">
+        <button onclick="loadPDF()">Load PDF</button>
+    </div>
+    <div id="status" style="margin: 20px 0; color: blue;"></div>
+    <div>
+        <button onclick="prevPage()">Previous</button>
+        <span>Page: <span id="pageNum"></span> / <span id="pageCount"></span></span>
+        <button onclick="nextPage()">Next</button>
+    </div>
+    <canvas id="pdfCanvas" style="border: 1px solid black; margin-top: 20px;"></canvas>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        let pdfDoc = null;
+        let currentPage = 1;
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+
+        async function loadPDF() {
+            const url = document.getElementById('pdfUrl').value;
+            document.getElementById('status').textContent = 'Loading PDF...';
+            
+            try {
+                const loadingTask = pdfjsLib.getDocument({
+                    url: url,
+                    withCredentials: false
+                });
+                
+                pdfDoc = await loadingTask.promise;
+                document.getElementById('pageCount').textContent = pdfDoc.numPages;
+                document.getElementById('status').textContent = 'PDF loaded successfully!';
+                document.getElementById('status').style.color = 'green';
+                
+                currentPage = 1;
+                renderPage(currentPage);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+                document.getElementById('status').style.color = 'red';
+            }
+        }
+
+        async function renderPage(pageNum) {
+            const page = await pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1.5 });
+            
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+            
+            await page.render(renderContext).promise;
+            document.getElementById('pageNum').textContent = pageNum;
+        }
+
+        function nextPage() {
+            if (pdfDoc && currentPage < pdfDoc.numPages) {
+                currentPage++;
+                renderPage(currentPage);
+            }
+        }
+
+        function prevPage() {
+            if (pdfDoc && currentPage > 1) {
+                currentPage--;
+                renderPage(currentPage);
+            }
+        }
+    </script>
+</body>
+</html>

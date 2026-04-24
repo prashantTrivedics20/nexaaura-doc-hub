@@ -1,0 +1,51 @@
+{
+  "name": "nexa-doc-hub",
+  "version": "1.0.0",
+  "description": "Production-ready document management system with MERN stack",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd backend && npm run dev",
+    "frontend:dev": "cd frontend && npm start",
+    "backend:start": "cd backend && npm start",
+    "frontend:build": "cd frontend && npm run build",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "test": "npm run backend:test && npm run frontend:test",
+    "backend:test": "cd backend && npm test",
+    "frontend:test": "cd frontend && npm test -- --watchAll=false",
+    "lint": "npm run backend:lint && npm run frontend:lint",
+    "backend:lint": "cd backend && npm run lint",
+    "frontend:lint": "cd frontend && npm run lint",
+    "lint:fix": "npm run backend:lint:fix && npm run frontend:lint:fix",
+    "backend:lint:fix": "cd backend && npm run lint:fix",
+    "frontend:lint:fix": "cd frontend && npm run lint:fix",
+    "build": "npm run frontend:build",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "deploy:production": "./scripts/deploy.sh production",
+    "deploy:staging": "./scripts/deploy.sh staging",
+    "deploy:rollback": "./scripts/deploy.sh rollback",
+    "security:audit": "npm audit && cd backend && npm audit && cd ../frontend && npm audit",
+    "security:fix": "npm audit fix && cd backend && npm audit fix && cd ../frontend && npm audit fix"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "document-management",
+    "mern-stack",
+    "react",
+    "nodejs",
+    "mongodb",
+    "cloudinary",
+    "production-ready"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
