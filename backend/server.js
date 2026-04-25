@@ -33,6 +33,7 @@ const authRoutes = require('./routes/auth');
 const documentRoutes = require('./routes/documents');
 const userRoutes = require('./routes/users');
 const categoryRoutes = require('./routes/categories');
+const paymentRoutes = require('./routes/payments');
 
 const app = express();
 
@@ -115,6 +116,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

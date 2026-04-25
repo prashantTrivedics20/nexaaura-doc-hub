@@ -58,14 +58,19 @@ export const AuthProvider = ({ children }) => {
     enqueueSnackbar('Logged out successfully', { variant: 'info' });
   };
 
+  const updateUser = (updatedUserData) => {
+    setUser(updatedUserData);
+  };
+
   const value = {
     user,
     loading,
     login,
     register,
     logout,
+    updateUser,
     isAdmin: user?.role === 'admin',
-    isPremium: user?.isPremium || user?.role === 'premium',
+    isPremium: user?.isPremium || user?.role === 'admin' || user?.role === 'premium',
     isAuthenticated: !!user,
   };
 

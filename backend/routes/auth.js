@@ -178,7 +178,9 @@ router.post('/verify-otp', [
           email: user.email,
           role: user.role,
           profile: user.profile,
-          isEmailVerified: user.isEmailVerified
+          isEmailVerified: user.isEmailVerified,
+          isPremium: user.isPremium,
+          premiumExpiresAt: user.premiumExpiresAt
         }
       });
 
@@ -213,7 +215,9 @@ router.post('/verify-otp', [
           role: user.role,
           profile: user.profile,
           lastLogin: user.lastLogin,
-          isEmailVerified: user.isEmailVerified
+          isEmailVerified: user.isEmailVerified,
+          isPremium: user.isPremium,
+          premiumExpiresAt: user.premiumExpiresAt
         }
       });
 
@@ -285,16 +289,26 @@ router.post('/reset-password', [
 // Get current user profile
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
+    const user = req.user;
+    
+    // Check if premium has expired
+    if (user.isPremium && user.premiumExpiresAt && new Date() > user.premiumExpiresAt) {
+      user.isPremium = false;
+      await user.save();
+    }
+    
     res.json({
       user: {
-        id: req.user._id,
-        username: req.user.username,
-        email: req.user.email,
-        role: req.user.role,
-        profile: req.user.profile,
-        lastLogin: req.user.lastLogin,
-        isEmailVerified: req.user.isEmailVerified,
-        createdAt: req.user.createdAt
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profile: user.profile,
+        lastLogin: user.lastLogin,
+        isEmailVerified: user.isEmailVerified,
+        isPremium: user.isPremium,
+        premiumExpiresAt: user.premiumExpiresAt,
+        createdAt: user.createdAt
       }
     });
   } catch (error) {
@@ -336,7 +350,9 @@ router.put('/profile', authenticateToken, [
         username: user.username,
         email: user.email,
         role: user.role,
-        profile: user.profile
+        profile: user.profile,
+        isPremium: user.isPremium,
+        premiumExpiresAt: user.premiumExpiresAt
       }
     });
   } catch (error) {
