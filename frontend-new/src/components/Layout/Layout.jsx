@@ -160,7 +160,17 @@ const Layout = () => {
                   display: { xs: 'none', sm: 'block' }
                 }}
               >
-                Document Hub
+                Nexa Doc Hub
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: '#616161',
+                  display: { xs: 'none', md: 'block' },
+                  ml: 1
+                }}
+              >
+                Scale Your Career 10x
               </Typography>
             </Box>
 

@@ -99,10 +99,10 @@ const Landing = () => {
               </Avatar>
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: '#212121', lineHeight: 1 }}>
-                  Document Hub
+                  Nexa Doc Hub
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#616161' }}>
-                  Your Digital Library
+                  Scale Your Career 10x
                 </Typography>
               </Box>
             </Stack>
@@ -201,9 +201,9 @@ const Landing = () => {
                   fontSize: { xs: '2.5rem', md: '3.5rem' }
                 }}
               >
-                Your Complete{' '}
+                Welcome to{' '}
                 <Box component="span" sx={{ color: '#00bcd4' }}>
-                  Document Hub
+                  Nexa Doc Hub
                 </Box>
               </Typography>
               
@@ -216,8 +216,8 @@ const Landing = () => {
                   lineHeight: 1.6,
                 }}
               >
-                Access, organize, and manage all your documents in one powerful platform. 
-                Built for professionals who value efficiency.
+                Scale Your Career 10x with Premium Documents & Resources. 
+                Access thousands of curated documents designed to accelerate your professional growth.
               </Typography>
               
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
@@ -627,11 +627,11 @@ const Landing = () => {
                   <DocumentIcon />
                 </Avatar>
                 <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  Document Hub
+                  Nexa Doc Hub
                 </Typography>
               </Stack>
               <Typography variant="body2" sx={{ color: '#9e9e9e', lineHeight: 1.7 }}>
-                Your complete document management solution
+                Scale Your Career 10x with premium documents and resources
               </Typography>
             </Grid>
             
@@ -680,7 +680,7 @@ const Landing = () => {
           
           <Box sx={{ mt: 4, pt: 4, borderTop: '1px solid #424242', textAlign: 'center' }}>
             <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
-              © 2024 Document Hub. All rights reserved.
+              © 2024 Nexa Doc Hub. All rights reserved.
             </Typography>
           </Box>
         </Container>

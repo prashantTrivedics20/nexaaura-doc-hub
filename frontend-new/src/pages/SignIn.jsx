@@ -185,7 +185,7 @@ const SignIn = () => {
               {tab === 0 ? 'Welcome back' : 'Create account'}
             </Typography>
             <Typography variant="body1" sx={{ color: '#616161' }}>
-              {tab === 0 ? 'Sign in to continue to Document Hub' : 'Get started with Document Hub'}
+              {tab === 0 ? 'Sign in to continue to Nexa Doc Hub' : 'Get started with Nexa Doc Hub'}
             </Typography>
           </Box>
 

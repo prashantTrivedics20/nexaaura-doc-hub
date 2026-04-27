@@ -165,7 +165,7 @@ const Premium = () => {
         key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: 'Document Hub',
+        name: 'Nexa Doc Hub',
         description: `${selectedPlan.name}`,
         order_id: orderData.orderId,
         prefill: {
