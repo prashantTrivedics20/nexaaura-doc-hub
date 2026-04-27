@@ -27,8 +27,8 @@ import {
 import { useSnackbar } from 'notistack';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure PDF.js worker - use local file
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
+// Configure PDF.js worker - use CDN for production reliability
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
   const [currentDocIndex, setCurrentDocIndex] = useState(initialIndex);

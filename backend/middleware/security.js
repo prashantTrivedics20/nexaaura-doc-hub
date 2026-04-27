@@ -147,19 +147,27 @@ const securityLogger = (req, res, next) => {
 // CORS configuration for production
 const corsOptions = {
   origin: function (origin, callback) {
+    // Get allowed origins from environment variable
     const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
       'http://localhost:3000',
-      'https://yourdomain.com',
-      'https://www.yourdomain.com'
+      'http://localhost:5173',
+      'https://nexaaura-doc-hub.vercel.app'
     ];
 
-    // Allow requests with no origin (mobile apps, etc.)
+    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
 
+    // Check if origin is allowed
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // In production, also allow any vercel.app domain
+      if (process.env.NODE_ENV === 'production' && origin.endsWith('.vercel.app')) {
+        callback(null, true);
+      } else {
+        console.warn('CORS blocked origin:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
   credentials: true,
