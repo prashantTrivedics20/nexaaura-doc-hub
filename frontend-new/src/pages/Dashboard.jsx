@@ -59,6 +59,10 @@ const Dashboard = () => {
   useEffect(() => {
     checkAdminSettings();
     fetchStats();
+    fetchCategories(); // Fetch categories once on mount
+  }, []);
+
+  useEffect(() => {
     fetchDocuments();
   }, [selectedCategory, searchTerm]);
 
@@ -100,6 +104,62 @@ const Dashboard = () => {
     return freeAccessEnabled || user?.isPremium || user?.role === 'admin';
   };
 
+  const fetchCategories = async () => {
+    try {
+      const token = sessionStorage.getItem('token');
+      
+      console.log('Fetching categories...');
+      
+      // Fetch all documents without filters to get accurate category counts
+      // Backend has max limit of 100
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/documents?limit=100`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log('Categories response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Fetched documents for categories:', data.documents.length);
+        
+        // Calculate category counts from all documents
+        const categoryCounts = data.documents.reduce((acc, doc) => {
+          acc[doc.category] = (acc[doc.category] || 0) + 1;
+          return acc;
+        }, {});
+
+        console.log('Category counts:', categoryCounts);
+
+        const dynamicCategories = [
+          { value: 'all', label: 'All', count: data.documents.length }
+        ];
+
+        // Add all categories with their counts
+        Object.keys(categoryCounts).sort().forEach(cat => {
+          dynamicCategories.push({
+            value: cat,
+            label: cat.charAt(0).toUpperCase() + cat.slice(1),
+            count: categoryCounts[cat]
+          });
+        });
+
+        console.log('Setting categories:', dynamicCategories);
+        setCategories(dynamicCategories);
+      } else {
+        console.error('Failed to fetch categories, status:', response.status);
+        const errorData = await response.json();
+        console.error('Error details:', errorData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    }
+  };
+
   const fetchDocuments = async () => {
     try {
       const token = sessionStorage.getItem('token');
@@ -125,25 +185,6 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setDocuments(data.documents);
-        
-        const categoryCounts = data.documents.reduce((acc, doc) => {
-          acc[doc.category] = (acc[doc.category] || 0) + 1;
-          return acc;
-        }, {});
-
-        const dynamicCategories = [
-          { value: 'all', label: 'All', count: data.documents.length }
-        ];
-
-        Object.keys(categoryCounts).forEach(cat => {
-          dynamicCategories.push({
-            value: cat,
-            label: cat.charAt(0).toUpperCase() + cat.slice(1),
-            count: categoryCounts[cat]
-          });
-        });
-
-        setCategories(dynamicCategories);
       } else {
         enqueueSnackbar('Failed to fetch documents', { variant: 'error' });
       }
