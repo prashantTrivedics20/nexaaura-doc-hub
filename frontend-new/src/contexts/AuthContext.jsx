@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useSnackbar } from 'notistack';
-import authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -17,20 +16,30 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
   // Check for existing token on app load
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         const token = sessionStorage.getItem('token');
         if (token) {
-          authService.setAuthToken(token);
-          const userData = await authService.getProfile();
-          setUser(userData.user);
+          const response = await fetch(`${API_URL}/api/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+          } else {
+            sessionStorage.removeItem('token');
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         sessionStorage.removeItem('token');
-        authService.removeAuthToken();
       } finally {
         setLoading(false);
       }
@@ -39,21 +48,60 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (token, userData) => {
-    sessionStorage.setItem('token', token);
-    authService.setAuthToken(token);
-    setUser(userData);
+  const login = async (email, password) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      sessionStorage.setItem('token', data.token);
+      setUser(data.user);
+      enqueueSnackbar('Welcome back!', { variant: 'success' });
+      return data;
+    } catch (error) {
+      enqueueSnackbar(error.message || 'Login failed', { variant: 'error' });
+      throw error;
+    }
   };
 
-  const register = async (token, userData) => {
-    sessionStorage.setItem('token', token);
-    authService.setAuthToken(token);
-    setUser(userData);
+  const register = async (username, email, password) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      sessionStorage.setItem('token', data.token);
+      setUser(data.user);
+      enqueueSnackbar('Account created successfully!', { variant: 'success' });
+      return data;
+    } catch (error) {
+      enqueueSnackbar(error.message || 'Registration failed', { variant: 'error' });
+      throw error;
+    }
   };
 
   const logout = () => {
     sessionStorage.removeItem('token');
-    authService.removeAuthToken();
     setUser(null);
     enqueueSnackbar('Logged out successfully', { variant: 'info' });
   };

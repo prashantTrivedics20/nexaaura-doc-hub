@@ -7,6 +7,8 @@ cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+  upload_preset: undefined, // Don't use upload presets that might have size limits
 });
 
 // Configure Cloudinary storage for documents
@@ -19,6 +21,7 @@ const documentStorage = new CloudinaryStorage({
     type: 'upload', // Make files publicly accessible
     access_mode: 'public', // Ensure public access
     chunk_size: 6000000, // 6MB chunks for large files
+    // Remove max_file_size to let multer handle it
     public_id: (req, file) => {
       // Generate unique filename with timestamp
       const timestamp = Date.now();
@@ -76,7 +79,10 @@ const uploadDocument = multer({
   storage: documentStorage,
   fileFilter: documentFileFilter,
   limits: {
-    fileSize: parseInt(process.env.MAX_FILE_SIZE) || 50 * 1024 * 1024, // 50MB default
+    fileSize: 10 * 1024 * 1024, // 10MB limit for Cloudinary free plan
+    fieldSize: 10 * 1024 * 1024, // 10MB for field data
+    files: 1, // Maximum 1 file
+    fields: 20 // Maximum 20 fields
   },
 });
 

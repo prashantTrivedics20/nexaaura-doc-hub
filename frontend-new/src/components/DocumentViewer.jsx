@@ -40,6 +40,7 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
   const [pdfDoc, setPdfDoc] = useState(null);
   const [renderError, setRenderError] = useState(false);
   const [scale, setScale] = useState(1.5); // Zoom scale
+  const [renderTask, setRenderTask] = useState(null); // Track current render task
   const canvasRef = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
 
@@ -63,6 +64,8 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
       }
     }
     return () => {
+      // Cleanup when component unmounts or document changes
+      cancelCurrentRender();
       if (pdfDoc) {
         pdfDoc.destroy();
       }
@@ -76,26 +79,50 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
     }
   }, [pdfDoc, currentPage, scale]);
 
+  // Cleanup function to cancel ongoing render tasks
+  const cancelCurrentRender = () => {
+    if (renderTask) {
+      renderTask.cancel();
+      setRenderTask(null);
+    }
+  };
+
   const loadPDF = async () => {
     if (!currentDoc || !currentDoc._id) {
       setRenderError(true);
       enqueueSnackbar('Document ID not found', { variant: 'error' });
+      console.error('❌ No document or document ID');
       return;
     }
 
     setPdfLoading(true);
     setRenderError(false);
+    
+    // Cancel any ongoing render tasks
+    cancelCurrentRender();
+    
     try {
       // Clean up previous PDF
       if (pdfDoc) {
         pdfDoc.destroy();
+        setPdfDoc(null);
       }
 
       // Get token and build proxy URL with token as query parameter
       const token = sessionStorage.getItem('token');
+      if (!token) {
+        console.error('❌ No authentication token found');
+        enqueueSnackbar('Authentication required. Please sign in again.', { variant: 'error' });
+        setRenderError(true);
+        setPdfLoading(false);
+        return;
+      }
+
       const proxyUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/documents/${currentDoc._id}/proxy?token=${encodeURIComponent(token)}`;
 
-      console.log('Loading PDF from proxy:', proxyUrl);
+      console.log('📄 Loading PDF:', currentDoc.title);
+      console.log('🔗 Proxy URL:', proxyUrl);
+      console.log('📋 Document:', currentDoc);
 
       const loadingTask = pdfjsLib.getDocument({
         url: proxyUrl,
@@ -108,23 +135,39 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
       setTotalPages(pdf.numPages);
       setCurrentPage(1);
       setPageInput('1');
+      console.log('✅ PDF loaded successfully:', pdf.numPages, 'pages');
       enqueueSnackbar(`PDF loaded: ${pdf.numPages} pages`, { variant: 'success' });
     } catch (error) {
-      console.error('Error loading PDF:', error);
+      console.error('❌ Error loading PDF:', error);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
       setRenderError(true);
-      enqueueSnackbar('Failed to load PDF. Try downloading instead.', { variant: 'warning' });
+      enqueueSnackbar('Failed to load PDF. Try downloading instead.', { variant: 'error' });
     } finally {
       setPdfLoading(false);
     }
   };
 
   const renderPage = async (pageNum) => {
-    if (!pdfDoc || !canvasRef.current) return;
+    if (!pdfDoc || !canvasRef.current) {
+      console.warn('⚠️ Cannot render: pdfDoc or canvas not available');
+      return;
+    }
+
+    // Cancel any ongoing render task before starting a new one
+    cancelCurrentRender();
 
     try {
+      console.log(`🎨 Rendering page ${pageNum}/${totalPages}`);
       const page = await pdfDoc.getPage(pageNum);
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
+
+      // Clear the canvas before rendering
+      context.clearRect(0, 0, canvas.width, canvas.height);
 
       // Use the scale state for zoom
       const viewport = page.getViewport({ scale: scale });
@@ -137,10 +180,27 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
         viewport: viewport
       };
 
-      await page.render(renderContext).promise;
+      // Start the render task and store it
+      const newRenderTask = page.render(renderContext);
+      setRenderTask(newRenderTask);
+
+      // Wait for render to complete
+      await newRenderTask.promise;
+      
+      // Clear the render task when done
+      setRenderTask(null);
+      console.log(`✅ Page ${pageNum} rendered successfully`);
+      
     } catch (error) {
-      console.error('Error rendering page:', error);
+      // Check if error is due to cancellation (which is expected)
+      if (error.name === 'RenderingCancelledException') {
+        console.log('🔄 Render cancelled (expected behavior)');
+        return;
+      }
+      
+      console.error('❌ Error rendering page:', error);
       setRenderError(true);
+      enqueueSnackbar('Error rendering page', { variant: 'error' });
     }
   };
 
@@ -150,7 +210,7 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
       if (!open) return;
       
       if (e.key === 'Escape') {
-        onClose();
+        handleClose();
       } else if (e.key === 'ArrowLeft' && !e.shiftKey) {
         handlePreviousPage();
       } else if (e.key === 'ArrowRight' && !e.shiftKey) {
@@ -219,7 +279,15 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
     setScale(1.5); // Reset to default
   };
 
+  const handleClose = () => {
+    // Cancel any ongoing render tasks when closing
+    cancelCurrentRender();
+    onClose();
+  };
+
   const handlePreviousDoc = () => {
+    // Cancel current render before switching documents
+    cancelCurrentRender();
     const newIndex = currentDocIndex > 0 ? currentDocIndex - 1 : documents.length - 1;
     setCurrentDocIndex(newIndex);
     setCurrentPage(1);
@@ -227,6 +295,8 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
   };
 
   const handleNextDoc = () => {
+    // Cancel current render before switching documents
+    cancelCurrentRender();
     const newIndex = currentDocIndex < documents.length - 1 ? currentDocIndex + 1 : 0;
     setCurrentDocIndex(newIndex);
     setCurrentPage(1);
@@ -327,100 +397,254 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="xl"
       fullWidth
       PaperProps={{
         sx: {
-          bgcolor: '#0f0f0f',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          height: '98vh', // Increased from 95vh
-          maxHeight: '98vh',
-          m: 1
+          bgcolor: '#ffffff',
+          borderRadius: 3,
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          height: '95vh',
+          maxHeight: '95vh',
+          m: 2,
+          overflow: 'hidden'
         }
       }}
     >
-      <DialogTitle sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', py: 1, bgcolor: '#0f0f0f' }}>
+      <DialogTitle 
+        sx={{ 
+          borderBottom: '2px solid #f0f0f0',
+          py: 2,
+          px: 3,
+          bgcolor: '#ffffff',
+          background: 'linear-gradient(135deg, #00bcd4 0%, #0097a7 100%)',
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
           {/* Left: Back Button + Document Navigation */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title="Back to Dashboard">
-              <IconButton onClick={onClose} size="small" sx={{ color: 'white' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Tooltip title="Back to Dashboard" arrow>
+              <IconButton 
+                onClick={handleClose} 
+                size="medium" 
+                sx={{ 
+                  color: 'white',
+                  bgcolor: 'rgba(255, 255, 255, 0.15)',
+                  '&:hover': { 
+                    bgcolor: 'rgba(255, 255, 255, 0.25)',
+                    transform: 'scale(1.05)'
+                  },
+                  transition: 'all 0.2s'
+                }}
+              >
                 <ArrowBackIcon />
               </IconButton>
             </Tooltip>
-            <Box sx={{ width: 1, height: 24, bgcolor: 'rgba(255,255,255,0.2)', mx: 0.5 }} />
-            <Tooltip title="Previous Document">
-              <IconButton onClick={handlePreviousDoc} size="small" sx={{ color: 'white' }}>
+            
+            <Box sx={{ width: 2, height: 32, bgcolor: 'rgba(255,255,255,0.3)', borderRadius: 1, mx: 0.5 }} />
+            
+            <Tooltip title="Previous Document (Shift + ←)" arrow>
+              <IconButton 
+                onClick={handlePreviousDoc} 
+                size="medium" 
+                sx={{ 
+                  color: 'white',
+                  bgcolor: 'rgba(255, 255, 255, 0.15)',
+                  '&:hover': { 
+                    bgcolor: 'rgba(255, 255, 255, 0.25)',
+                    transform: 'translateX(-2px)'
+                  },
+                  transition: 'all 0.2s'
+                }}
+              >
                 <NavigateBeforeIcon />
               </IconButton>
             </Tooltip>
+            
             <Chip
               label={`${currentDocIndex + 1} / ${documents.length}`}
-              size="small"
+              size="medium"
               sx={{
-                backgroundColor: getCategoryColor(currentDoc.category),
-                color: 'white',
-                fontWeight: 600,
-                minWidth: 60,
-                height: 24
+                bgcolor: 'white',
+                color: '#00bcd4',
+                fontWeight: 700,
+                fontSize: '0.875rem',
+                minWidth: 70,
+                height: 32,
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                '& .MuiChip-label': {
+                  px: 2
+                }
               }}
             />
-            <Tooltip title="Next Document">
-              <IconButton onClick={handleNextDoc} size="small" sx={{ color: 'white' }}>
+            
+            <Tooltip title="Next Document (Shift + →)" arrow>
+              <IconButton 
+                onClick={handleNextDoc} 
+                size="medium" 
+                sx={{ 
+                  color: 'white',
+                  bgcolor: 'rgba(255, 255, 255, 0.15)',
+                  '&:hover': { 
+                    bgcolor: 'rgba(255, 255, 255, 0.25)',
+                    transform: 'translateX(2px)'
+                  },
+                  transition: 'all 0.2s'
+                }}
+              >
                 <NavigateNextIcon />
               </IconButton>
             </Tooltip>
           </Box>
 
           {/* Center: Document Title */}
-          <Typography 
-            variant="subtitle1" 
-            sx={{ 
-              fontWeight: 600,
-              color: 'white',
-              overflow: 'hidden', 
-              textOverflow: 'ellipsis', 
-              whiteSpace: 'nowrap',
-              flex: 1,
-              textAlign: 'center'
-            }}
-          >
-            {currentDoc.title}
-          </Typography>
+          <Box sx={{ flex: 1, textAlign: 'center', px: 2 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontWeight: 700,
+                color: 'white',
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis', 
+                whiteSpace: 'nowrap',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                fontSize: '1.1rem'
+              }}
+            >
+              {currentDoc.title}
+            </Typography>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: 'rgba(255, 255, 255, 0.9)',
+                textTransform: 'uppercase',
+                fontWeight: 600,
+                letterSpacing: 1
+              }}
+            >
+              {currentDoc.category}
+            </Typography>
+          </Box>
 
           {/* Right: Zoom + Action Buttons */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {isPDF && (
               <>
-                <Tooltip title="Zoom Out">
-                  <IconButton onClick={handleZoomOut} size="small" sx={{ color: 'white' }} disabled={scale <= 0.5}>
-                    <ZoomOutIcon fontSize="small" />
-                  </IconButton>
+                <Tooltip title="Zoom Out" arrow>
+                  <span>
+                    <IconButton 
+                      onClick={handleZoomOut} 
+                      size="medium" 
+                      disabled={scale <= 0.5}
+                      sx={{ 
+                        color: 'white',
+                        bgcolor: 'rgba(255, 255, 255, 0.15)',
+                        '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.25)' },
+                        '&.Mui-disabled': { 
+                          color: 'rgba(255, 255, 255, 0.3)',
+                          bgcolor: 'rgba(255, 255, 255, 0.05)'
+                        }
+                      }}
+                    >
+                      <ZoomOutIcon fontSize="small" />
+                    </IconButton>
+                  </span>
                 </Tooltip>
-                <Typography variant="caption" sx={{ color: 'white', minWidth: 45, textAlign: 'center' }}>
+                
+                <Box 
+                  sx={{ 
+                    bgcolor: 'white',
+                    color: '#00bcd4',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1,
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    minWidth: 55,
+                    textAlign: 'center',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                  }}
+                >
                   {Math.round(scale * 100)}%
-                </Typography>
-                <Tooltip title="Zoom In">
-                  <IconButton onClick={handleZoomIn} size="small" sx={{ color: 'white' }} disabled={scale >= 3}>
-                    <ZoomInIcon fontSize="small" />
-                  </IconButton>
+                </Box>
+                
+                <Tooltip title="Zoom In" arrow>
+                  <span>
+                    <IconButton 
+                      onClick={handleZoomIn} 
+                      size="medium" 
+                      disabled={scale >= 3}
+                      sx={{ 
+                        color: 'white',
+                        bgcolor: 'rgba(255, 255, 255, 0.15)',
+                        '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.25)' },
+                        '&.Mui-disabled': { 
+                          color: 'rgba(255, 255, 255, 0.3)',
+                          bgcolor: 'rgba(255, 255, 255, 0.05)'
+                        }
+                      }}
+                    >
+                      <ZoomInIcon fontSize="small" />
+                    </IconButton>
+                  </span>
                 </Tooltip>
-                <Box sx={{ width: 1, height: 24, bgcolor: 'rgba(255,255,255,0.2)', mx: 0.5 }} />
+                
+                <Box sx={{ width: 2, height: 32, bgcolor: 'rgba(255,255,255,0.3)', borderRadius: 1, mx: 0.5 }} />
               </>
             )}
-            <Tooltip title="Open in New Tab">
-              <IconButton onClick={handleOpenInNewTab} size="small" sx={{ color: 'white' }}>
+            
+            <Tooltip title="Open in New Tab" arrow>
+              <IconButton 
+                onClick={handleOpenInNewTab} 
+                size="medium" 
+                sx={{ 
+                  color: 'white',
+                  bgcolor: 'rgba(255, 255, 255, 0.15)',
+                  '&:hover': { 
+                    bgcolor: 'rgba(255, 255, 255, 0.25)',
+                    transform: 'scale(1.05)'
+                  },
+                  transition: 'all 0.2s'
+                }}
+              >
                 <OpenInNewIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Download">
-              <IconButton onClick={handleDownload} size="small" disabled={loading} sx={{ color: 'white' }}>
-                {loading ? <CircularProgress size={18} sx={{ color: 'white' }} /> : <DownloadIcon fontSize="small" />}
+            
+            <Tooltip title="Download Document" arrow>
+              <IconButton 
+                onClick={handleDownload} 
+                size="medium" 
+                disabled={loading} 
+                sx={{ 
+                  color: 'white',
+                  bgcolor: 'rgba(255, 255, 255, 0.15)',
+                  '&:hover': { 
+                    bgcolor: 'rgba(255, 255, 255, 0.25)',
+                    transform: 'scale(1.05)'
+                  },
+                  transition: 'all 0.2s'
+                }}
+              >
+                {loading ? <CircularProgress size={20} sx={{ color: 'white' }} /> : <DownloadIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
-            <Tooltip title="Close">
-              <IconButton onClick={onClose} size="small" sx={{ color: 'white' }}>
+            
+            <Tooltip title="Close (Esc)" arrow>
+              <IconButton 
+                onClick={handleClose} 
+                size="medium" 
+                sx={{ 
+                  color: 'white',
+                  bgcolor: 'rgba(255, 255, 255, 0.15)',
+                  '&:hover': { 
+                    bgcolor: '#ff6b6b',
+                    transform: 'scale(1.05)'
+                  },
+                  transition: 'all 0.2s'
+                }}
+              >
                 <CloseIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -428,8 +652,8 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#1a1a1a' }}>
-        {/* Top Page Navigation Bar - DocHub Style */}
+      <DialogContent sx={{ p: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#f5f5f5' }}>
+        {/* Top Page Navigation Bar - Enhanced Style */}
         {isPDF && totalPages > 0 && (
           <Box
             sx={{
@@ -437,60 +661,153 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 2,
-              py: 1.5,
-              px: 2,
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-              bgcolor: '#0f0f0f'
+              py: 2,
+              px: 3,
+              borderBottom: '2px solid #e0e0e0',
+              bgcolor: '#ffffff',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
             }}
           >
-            <IconButton 
-              onClick={handlePreviousPage} 
-              disabled={currentPage === 1}
-              size="small"
-              sx={{ color: currentPage === 1 ? 'rgba(255,255,255,0.3)' : 'white' }}
-            >
-              <NavigateBeforeIcon />
-            </IconButton>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <form onSubmit={handlePageInputSubmit} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <TextField
-                  value={pageInput}
-                  onChange={handlePageInputChange}
-                  size="small"
-                  sx={{
-                    width: 45,
-                    '& input': {
-                      textAlign: 'center',
-                      py: 0.5,
-                      px: 0.5,
-                      fontSize: '0.875rem',
-                      color: 'white',
-                      bgcolor: 'rgba(255,255,255,0.1)',
-                      borderRadius: 1
+            <Tooltip title="First Page" arrow>
+              <span>
+                <IconButton 
+                  onClick={handleFirstPage} 
+                  disabled={currentPage === 1}
+                  size="medium"
+                  sx={{ 
+                    color: currentPage === 1 ? '#ccc' : '#00bcd4',
+                    bgcolor: currentPage === 1 ? '#f5f5f5' : '#e0f7fa',
+                    '&:hover': { 
+                      bgcolor: currentPage === 1 ? '#f5f5f5' : '#b2ebf2',
+                      transform: currentPage === 1 ? 'none' : 'scale(1.05)'
                     },
-                    '& fieldset': {
-                      borderColor: 'rgba(255,255,255,0.2)'
-                    },
-                    '& .MuiOutlinedInput-root:hover fieldset': {
-                      borderColor: 'rgba(255,255,255,0.3)'
+                    transition: 'all 0.2s',
+                    '&.Mui-disabled': {
+                      color: '#ccc',
+                      bgcolor: '#f5f5f5'
                     }
                   }}
-                />
-                <Typography variant="body2" color="rgba(255,255,255,0.7)" sx={{ fontSize: '0.875rem' }}>
-                  / {totalPages}
-                </Typography>
+                >
+                  <FirstPageIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            <Tooltip title="Previous Page (←)" arrow>
+              <span>
+                <IconButton 
+                  onClick={handlePreviousPage} 
+                  disabled={currentPage === 1}
+                  size="medium"
+                  sx={{ 
+                    color: currentPage === 1 ? '#ccc' : '#00bcd4',
+                    bgcolor: currentPage === 1 ? '#f5f5f5' : '#e0f7fa',
+                    '&:hover': { 
+                      bgcolor: currentPage === 1 ? '#f5f5f5' : '#b2ebf2',
+                      transform: currentPage === 1 ? 'none' : 'translateX(-2px)'
+                    },
+                    transition: 'all 0.2s',
+                    '&.Mui-disabled': {
+                      color: '#ccc',
+                      bgcolor: '#f5f5f5'
+                    }
+                  }}
+                >
+                  <NavigateBeforeIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: 'white', px: 2, py: 1, borderRadius: 2, boxShadow: '0 2px 8px rgba(0, 188, 212, 0.15)' }}>
+              <form onSubmit={handlePageInputSubmit} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#666', fontWeight: 600 }}>
+                    Page
+                  </Typography>
+                  <TextField
+                    value={pageInput}
+                    onChange={handlePageInputChange}
+                    size="small"
+                    sx={{
+                      width: 55,
+                      '& input': {
+                        textAlign: 'center',
+                        py: 0.75,
+                        px: 1,
+                        fontSize: '0.95rem',
+                        fontWeight: 700,
+                        color: '#00bcd4',
+                        bgcolor: '#e0f7fa',
+                        borderRadius: 1.5
+                      },
+                      '& fieldset': {
+                        borderColor: '#00bcd4',
+                        borderWidth: 2
+                      },
+                      '& .MuiOutlinedInput-root:hover fieldset': {
+                        borderColor: '#0097a7'
+                      },
+                      '& .MuiOutlinedInput-root.Mui-focused fieldset': {
+                        borderColor: '#00bcd4'
+                      }
+                    }}
+                  />
+                  <Typography variant="body2" sx={{ color: '#666', fontWeight: 600 }}>
+                    of {totalPages}
+                  </Typography>
+                </Box>
               </form>
             </Box>
 
-            <IconButton 
-              onClick={handleNextPage} 
-              disabled={currentPage === totalPages}
-              size="small"
-              sx={{ color: currentPage === totalPages ? 'rgba(255,255,255,0.3)' : 'white' }}
-            >
-              <NavigateNextIcon />
-            </IconButton>
+            <Tooltip title="Next Page (→)" arrow>
+              <span>
+                <IconButton 
+                  onClick={handleNextPage} 
+                  disabled={currentPage === totalPages}
+                  size="medium"
+                  sx={{ 
+                    color: currentPage === totalPages ? '#ccc' : '#00bcd4',
+                    bgcolor: currentPage === totalPages ? '#f5f5f5' : '#e0f7fa',
+                    '&:hover': { 
+                      bgcolor: currentPage === totalPages ? '#f5f5f5' : '#b2ebf2',
+                      transform: currentPage === totalPages ? 'none' : 'translateX(2px)'
+                    },
+                    transition: 'all 0.2s',
+                    '&.Mui-disabled': {
+                      color: '#ccc',
+                      bgcolor: '#f5f5f5'
+                    }
+                  }}
+                >
+                  <NavigateNextIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            <Tooltip title="Last Page" arrow>
+              <span>
+                <IconButton 
+                  onClick={handleLastPage} 
+                  disabled={currentPage === totalPages}
+                  size="medium"
+                  sx={{ 
+                    color: currentPage === totalPages ? '#ccc' : '#00bcd4',
+                    bgcolor: currentPage === totalPages ? '#f5f5f5' : '#e0f7fa',
+                    '&:hover': { 
+                      bgcolor: currentPage === totalPages ? '#f5f5f5' : '#b2ebf2',
+                      transform: currentPage === totalPages ? 'none' : 'scale(1.05)'
+                    },
+                    transition: 'all 0.2s',
+                    '&.Mui-disabled': {
+                      color: '#ccc',
+                      bgcolor: '#f5f5f5'
+                    }
+                  }}
+                >
+                  <LastPageIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
           </Box>
         )}
 
@@ -499,19 +816,22 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
           sx={{
             flex: 1,
             display: 'flex',
-            alignItems: 'flex-start', // Changed from 'center' to 'flex-start'
+            alignItems: 'flex-start',
             justifyContent: 'center',
-            bgcolor: '#1a1a1a',
-            overflow: 'auto', // Enable scrolling
+            bgcolor: '#f5f5f5',
+            overflow: 'auto',
             position: 'relative',
-            p: 3
+            p: 4
           }}
         >
           {pdfLoading ? (
             <Box sx={{ textAlign: 'center', mt: 10 }}>
-              <CircularProgress size={60} sx={{ color: '#8B5CF6', mb: 2 }} />
-              <Typography variant="body1" color="text.secondary">
+              <CircularProgress size={70} thickness={4} sx={{ color: '#00bcd4', mb: 3 }} />
+              <Typography variant="h6" sx={{ color: '#00bcd4', fontWeight: 600, mb: 1 }}>
                 Loading PDF...
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Please wait while we prepare your document
               </Typography>
             </Box>
           ) : isPDF && pdfDoc && !renderError ? (
@@ -522,10 +842,11 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
                 display: 'flex',
                 justifyContent: 'center',
                 bgcolor: 'white',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-                borderRadius: 1,
-                overflow: 'visible', // Changed from 'hidden'
-                my: 2 // Add margin top and bottom
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
+                borderRadius: 2,
+                overflow: 'visible',
+                my: 2,
+                border: '1px solid #e0e0e0'
               }}
             >
               <canvas
@@ -539,12 +860,27 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
             </Box>
           ) : isPDF && renderError ? (
             /* PDF Load Error - Show Fallback */
-            <Box sx={{ textAlign: 'center', p: 4, maxWidth: 500 }}>
-              <Typography variant="h5" sx={{ mb: 2, color: '#8B5CF6' }}>
+            <Box sx={{ textAlign: 'center', p: 5, maxWidth: 600, bgcolor: 'white', borderRadius: 3, boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)' }}>
+              <Box 
+                sx={{ 
+                  width: 80, 
+                  height: 80, 
+                  borderRadius: '50%', 
+                  bgcolor: '#ffe0e0', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  margin: '0 auto 24px',
+                  border: '3px solid #ff6b6b'
+                }}
+              >
+                <CloseIcon sx={{ fontSize: 40, color: '#ff6b6b' }} />
+              </Box>
+              <Typography variant="h5" sx={{ mb: 2, color: '#333', fontWeight: 700 }}>
                 Unable to Display PDF
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                This PDF cannot be displayed in the browser. Please use one of the options below:
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 4, lineHeight: 1.7 }}>
+                This PDF cannot be displayed in the browser. Please use one of the options below to access your document:
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Button
@@ -553,8 +889,21 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
                   startIcon={<OpenInNewIcon />}
                   onClick={handleOpenInNewTab}
                   sx={{
-                    background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                    px: 4
+                    bgcolor: '#00bcd4',
+                    color: 'white',
+                    px: 4,
+                    py: 1.5,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    borderRadius: 2,
+                    boxShadow: '0 4px 12px rgba(0, 188, 212, 0.3)',
+                    '&:hover': {
+                      bgcolor: '#0097a7',
+                      boxShadow: '0 6px 16px rgba(0, 188, 212, 0.4)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.2s'
                   }}
                 >
                   Open in New Tab
@@ -566,9 +915,22 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
                   onClick={handleDownload}
                   disabled={loading}
                   sx={{
-                    borderColor: '#8B5CF6',
-                    color: '#8B5CF6',
-                    px: 4
+                    borderColor: '#00bcd4',
+                    color: '#00bcd4',
+                    px: 4,
+                    py: 1.5,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    borderRadius: 2,
+                    borderWidth: 2,
+                    '&:hover': {
+                      borderWidth: 2,
+                      borderColor: '#0097a7',
+                      bgcolor: '#e0f7fa',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.2s'
                   }}
                 >
                   {loading ? 'Downloading...' : 'Download PDF'}
@@ -584,19 +946,37 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
               sx={{
                 maxWidth: '100%',
                 maxHeight: '100%',
-                objectFit: 'contain'
+                objectFit: 'contain',
+                borderRadius: 2,
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
+                border: '1px solid #e0e0e0'
               }}
             />
           ) : (
             /* Unsupported File Type */
-            <Box sx={{ textAlign: 'center', p: 4, maxWidth: 500 }}>
-              <Typography variant="h5" sx={{ mb: 2, color: '#8B5CF6' }}>
+            <Box sx={{ textAlign: 'center', p: 5, maxWidth: 600, bgcolor: 'white', borderRadius: 3, boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)' }}>
+              <Box 
+                sx={{ 
+                  width: 80, 
+                  height: 80, 
+                  borderRadius: '50%', 
+                  bgcolor: '#e0f7fa', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  margin: '0 auto 24px',
+                  border: '3px solid #00bcd4'
+                }}
+              >
+                <DownloadIcon sx={{ fontSize: 40, color: '#00bcd4' }} />
+              </Box>
+              <Typography variant="h5" sx={{ mb: 2, color: '#333', fontWeight: 700 }}>
                 Preview Not Available
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 4, lineHeight: 1.7 }}>
                 This file type cannot be previewed in the browser. Please download it to view on your device.
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Button
                   variant="contained"
                   size="large"
@@ -604,8 +984,21 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
                   onClick={handleDownload}
                   disabled={loading}
                   sx={{
-                    background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                    px: 4
+                    bgcolor: '#00bcd4',
+                    color: 'white',
+                    px: 4,
+                    py: 1.5,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    borderRadius: 2,
+                    boxShadow: '0 4px 12px rgba(0, 188, 212, 0.3)',
+                    '&:hover': {
+                      bgcolor: '#0097a7',
+                      boxShadow: '0 6px 16px rgba(0, 188, 212, 0.4)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.2s'
                   }}
                 >
                   {loading ? 'Downloading...' : 'Download Document'}
@@ -616,9 +1009,22 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
                   startIcon={<OpenInNewIcon />}
                   onClick={handleOpenInNewTab}
                   sx={{
-                    borderColor: '#8B5CF6',
-                    color: '#8B5CF6',
-                    px: 4
+                    borderColor: '#00bcd4',
+                    color: '#00bcd4',
+                    px: 4,
+                    py: 1.5,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    borderRadius: 2,
+                    borderWidth: 2,
+                    '&:hover': {
+                      borderWidth: 2,
+                      borderColor: '#0097a7',
+                      bgcolor: '#e0f7fa',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.2s'
                   }}
                 >
                   Open in New Tab
@@ -628,56 +1034,94 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
           )}
         </Box>
 
-        {/* Bottom Navigation Bar - DocHub Style */}
+        {/* Bottom Navigation Bar - Enhanced Style */}
         {isPDF && totalPages > 0 && (
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: 2,
-              py: 1.5,
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-              bgcolor: '#0f0f0f'
+              justifyContent: 'space-between',
+              gap: 3,
+              py: 2,
+              px: 3,
+              borderTop: '2px solid #e0e0e0',
+              bgcolor: '#ffffff',
+              boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.05)'
             }}
           >
+            {/* Left: Previous Button */}
             <Button
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
               startIcon={<NavigateBeforeIcon />}
               sx={{
-                color: currentPage === 1 ? 'rgba(255,255,255,0.3)' : 'white',
+                color: currentPage === 1 ? '#ccc' : '#00bcd4',
+                bgcolor: currentPage === 1 ? '#f5f5f5' : '#e0f7fa',
                 textTransform: 'none',
-                fontSize: '0.875rem',
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                px: 3,
+                py: 1,
+                borderRadius: 2,
                 '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.1)'
+                  bgcolor: currentPage === 1 ? '#f5f5f5' : '#b2ebf2',
+                  transform: currentPage === 1 ? 'none' : 'translateX(-2px)'
                 },
                 '&.Mui-disabled': {
-                  color: 'rgba(255,255,255,0.3)'
-                }
+                  color: '#ccc',
+                  bgcolor: '#f5f5f5'
+                },
+                transition: 'all 0.2s'
               }}
             >
               Previous
             </Button>
 
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', mx: 1 }}>
-              Page {currentPage} of {totalPages}
-            </Typography>
+            {/* Center: Page Info */}
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 2,
+                bgcolor: '#e0f7fa',
+                px: 3,
+                py: 1,
+                borderRadius: 2,
+                border: '2px solid #00bcd4'
+              }}
+            >
+              <Typography variant="body1" sx={{ color: '#00bcd4', fontWeight: 700, fontSize: '1rem' }}>
+                Page {currentPage}
+              </Typography>
+              <Box sx={{ width: 2, height: 20, bgcolor: '#00bcd4', borderRadius: 1 }} />
+              <Typography variant="body1" sx={{ color: '#666', fontWeight: 600, fontSize: '1rem' }}>
+                of {totalPages}
+              </Typography>
+            </Box>
 
+            {/* Right: Next Button */}
             <Button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
               endIcon={<NavigateNextIcon />}
               sx={{
-                color: currentPage === totalPages ? 'rgba(255,255,255,0.3)' : 'white',
+                color: currentPage === totalPages ? '#ccc' : '#00bcd4',
+                bgcolor: currentPage === totalPages ? '#f5f5f5' : '#e0f7fa',
                 textTransform: 'none',
-                fontSize: '0.875rem',
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                px: 3,
+                py: 1,
+                borderRadius: 2,
                 '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.1)'
+                  bgcolor: currentPage === totalPages ? '#f5f5f5' : '#b2ebf2',
+                  transform: currentPage === totalPages ? 'none' : 'translateX(2px)'
                 },
                 '&.Mui-disabled': {
-                  color: 'rgba(255,255,255,0.3)'
-                }
+                  color: '#ccc',
+                  bgcolor: '#f5f5f5'
+                },
+                transition: 'all 0.2s'
               }}
             >
               Next
@@ -685,20 +1129,42 @@ const DocumentViewer = ({ documents, open, onClose, initialIndex = 0 }) => {
           </Box>
         )}
 
-        {/* Document Info Footer - Minimal */}
+        {/* Document Info Footer - Enhanced */}
         <Box
           sx={{
-            py: 1,
-            px: 2,
-            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-            bgcolor: '#0a0a0a',
+            py: 1.5,
+            px: 3,
+            borderTop: '1px solid #e0e0e0',
+            bgcolor: '#fafafa',
             display: 'flex',
             justifyContent: 'center',
-            alignItems: 'center'
+            alignItems: 'center',
+            gap: 2
           }}
         >
-          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>
-            {currentDoc.category} • {formatFileSize(currentDoc.file?.size || 0)} • Use ← → to navigate
+          <Chip
+            label={currentDoc.category.toUpperCase()}
+            size="small"
+            sx={{
+              bgcolor: getCategoryColor(currentDoc.category),
+              color: 'white',
+              fontWeight: 700,
+              fontSize: '0.7rem',
+              height: 22,
+              letterSpacing: 0.5
+            }}
+          />
+          <Typography variant="caption" sx={{ color: '#999', fontSize: '0.8rem' }}>
+            •
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#666', fontSize: '0.8rem', fontWeight: 600 }}>
+            {formatFileSize(currentDoc.file?.size || 0)}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#999', fontSize: '0.8rem' }}>
+            •
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#666', fontSize: '0.8rem', fontWeight: 500 }}>
+            Use ← → to navigate pages • Shift + ← → to switch documents
           </Typography>
         </Box>
       </DialogContent>

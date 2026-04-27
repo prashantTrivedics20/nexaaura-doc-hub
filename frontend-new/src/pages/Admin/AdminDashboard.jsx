@@ -6,29 +6,22 @@ import {
   CardContent,
   Typography,
   Button,
-  Avatar,
   List,
   ListItem,
   ListItemText,
   ListItemAvatar,
   Chip,
-  LinearProgress,
   IconButton,
-  Menu,
-  MenuItem,
   CircularProgress,
-  Skeleton
+  Avatar,
+  Paper,
 } from '@mui/material';
 import {
   Description as DocumentIcon,
   People as PeopleIcon,
-  CloudUpload as UploadIcon,
-  Analytics as AnalyticsIcon,
-  TrendingUp as TrendingUpIcon,
   Download as DownloadIcon,
+  TrendingUp as TrendingUpIcon,
   MoreVert as MoreVertIcon,
-  Add as AddIcon,
-  Folder as FolderIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -46,8 +39,6 @@ const AdminDashboard = () => {
   const [recentDocuments, setRecentDocuments] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -55,9 +46,8 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const token = sessionStorage.getItem('token'); // Fixed: use sessionStorage
+      const token = sessionStorage.getItem('token');
       
-      // Fetch admin statistics from the new endpoint
       const adminStatsResponse = await fetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/users/admin/stats`,
         {
@@ -65,7 +55,6 @@ const AdminDashboard = () => {
         }
       );
 
-      // Fetch recent documents
       const docsResponse = await fetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/documents?limit=5`,
         {
@@ -73,7 +62,6 @@ const AdminDashboard = () => {
         }
       );
 
-      // Fetch recent users
       const usersResponse = await fetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/users?limit=5`,
         {
@@ -109,16 +97,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleMenuOpen = (event, item, type) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedItem({ ...item, type });
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedItem(null);
-  };
-
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -127,208 +105,83 @@ const AdminDashboard = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getCategoryColor = (category) => {
-    const colors = {
-      policy: '#8B5CF6',
-      procedure: '#EC4899',
-      manual: '#10B981',
-      report: '#F59E0B',
-      contract: '#3B82F6',
-      other: '#6B7280'
-    };
-    return colors[category] || colors.other;
-  };
-
   const quickActions = [
     {
       title: 'Upload Document',
-      description: 'Add new document to the system',
-      icon: <UploadIcon />,
-      color: '#8B5CF6',
-      action: () => navigate('/admin/documents')
+      action: () => navigate('/app/admin/documents')
     },
     {
       title: 'Manage Users',
-      description: 'View and manage user accounts',
-      icon: <PeopleIcon />,
-      color: '#EC4899',
-      action: () => navigate('/admin/users')
+      action: () => navigate('/app/admin/users')
     },
     {
       title: 'View Analytics',
-      description: 'Check system analytics and reports',
-      icon: <AnalyticsIcon />,
-      color: '#10B981',
-      action: () => navigate('/admin/analytics')
+      action: () => navigate('/app/admin/analytics')
     },
     {
-      title: 'Document Library',
-      description: 'Browse all documents',
-      icon: <FolderIcon />,
-      color: '#F59E0B',
-      action: () => navigate('/admin/documents')
+      title: 'Settings',
+      action: () => navigate('/app/admin/settings')
     }
   ];
 
   return (
-    <Box>
+    <Box sx={{ bgcolor: '#f1f3f6', minHeight: '100vh', pb: 4 }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+      <Paper elevation={0} sx={{ mb: 3, p: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 500, mb: 1, color: '#212121' }}>
           Admin Dashboard
         </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage documents, users, and monitor system performance
+        <Typography variant="body2" sx={{ color: '#878787' }}>
+          Manage your document hub
         </Typography>
-      </Box>
+      </Paper>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar
-                  sx={{
-                    background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                    mr: 2
-                  }}
-                >
-                  <DocumentIcon />
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  {loading ? (
-                    <>
-                      <Skeleton variant="text" width={60} height={40} />
-                      <Skeleton variant="text" width={100} height={20} />
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                        {stats.totalDocuments}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Documents
-                      </Typography>
-                    </>
-                  )}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {[
+          {
+            icon: <DocumentIcon sx={{ color: '#2874f0' }} />,
+            title: 'Total Documents',
+            value: stats.totalDocuments,
+          },
+          {
+            icon: <PeopleIcon sx={{ color: '#2874f0' }} />,
+            title: 'Total Users',
+            value: stats.totalUsers,
+          },
+          {
+            icon: <DownloadIcon sx={{ color: '#2874f0' }} />,
+            title: 'Total Downloads',
+            value: stats.totalDownloads,
+          },
+          {
+            icon: <TrendingUpIcon sx={{ color: '#2874f0' }} />,
+            title: 'Avg File Size',
+            value: formatFileSize(stats.avgFileSize),
+          },
+        ].map((stat, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card elevation={0}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  {stat.icon}
+                  <Typography variant="h5" sx={{ ml: 'auto', fontWeight: 500, color: '#212121' }}>
+                    {loading ? <CircularProgress size={24} /> : (typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value)}
+                  </Typography>
                 </Box>
-              </Box>
-              {loading && <LinearProgress />}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar
-                  sx={{
-                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                    mr: 2
-                  }}
-                >
-                  <PeopleIcon />
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  {loading ? (
-                    <>
-                      <Skeleton variant="text" width={60} height={40} />
-                      <Skeleton variant="text" width={100} height={20} />
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                        {stats.totalUsers}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Users
-                      </Typography>
-                    </>
-                  )}
-                </Box>
-              </Box>
-              {loading && <LinearProgress />}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar
-                  sx={{
-                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                    mr: 2
-                  }}
-                >
-                  <DownloadIcon />
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  {loading ? (
-                    <>
-                      <Skeleton variant="text" width={60} height={40} />
-                      <Skeleton variant="text" width={100} height={20} />
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                        {stats.totalDownloads}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Downloads
-                      </Typography>
-                    </>
-                  )}
-                </Box>
-              </Box>
-              {loading && <LinearProgress />}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar
-                  sx={{
-                    background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-                    mr: 2
-                  }}
-                >
-                  <TrendingUpIcon />
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  {loading ? (
-                    <>
-                      <Skeleton variant="text" width={80} height={40} />
-                      <Skeleton variant="text" width={100} height={20} />
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                        {formatFileSize(stats.avgFileSize)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Avg File Size
-                      </Typography>
-                    </>
-                  )}
-                </Box>
-              </Box>
-              {loading && <LinearProgress />}
-            </CardContent>
-          </Card>
-        </Grid>
+                <Typography variant="body2" sx={{ color: '#878787' }}>
+                  {stat.title}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
 
       {/* Quick Actions */}
-      <Card sx={{ mb: 4 }}>
+      <Card elevation={0} sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 500, color: '#212121' }}>
             Quick Actions
           </Typography>
           <Grid container spacing={2}>
@@ -339,33 +192,16 @@ const AdminDashboard = () => {
                   variant="outlined"
                   onClick={action.action}
                   sx={{
-                    p: 2,
-                    height: '100%',
-                    flexDirection: 'column',
-                    borderColor: action.color,
-                    color: action.color,
+                    py: 2,
+                    borderColor: '#dadce0',
+                    color: '#212121',
                     '&:hover': {
-                      backgroundColor: `${action.color}10`,
-                      borderColor: action.color
-                    }
+                      borderColor: '#2874f0',
+                      bgcolor: 'rgba(40, 116, 240, 0.04)',
+                    },
                   }}
                 >
-                  <Avatar
-                    sx={{
-                      backgroundColor: action.color,
-                      mb: 1,
-                      width: 48,
-                      height: 48
-                    }}
-                  >
-                    {action.icon}
-                  </Avatar>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    {action.title}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
-                    {action.description}
-                  </Typography>
+                  {action.title}
                 </Button>
               </Grid>
             ))}
@@ -374,95 +210,53 @@ const AdminDashboard = () => {
       </Card>
 
       {/* Recent Activity */}
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         {/* Recent Documents */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card elevation={0}>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 500, color: '#212121' }}>
                   Recent Documents
                 </Typography>
                 <Button
                   size="small"
-                  onClick={() => navigate('/admin/documents')}
-                  sx={{ color: '#8B5CF6' }}
+                  onClick={() => navigate('/app/admin/documents')}
+                  sx={{ color: '#2874f0' }}
                 >
                   View All
                 </Button>
               </Box>
 
               {loading ? (
-                <List>
-                  {[1, 2, 3, 4, 5].map((item) => (
-                    <ListItem key={item} sx={{ px: 0 }}>
-                      <ListItemAvatar>
-                        <Skeleton variant="circular" width={40} height={40} />
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={<Skeleton variant="text" width="60%" height={24} />}
-                        secondary={<Skeleton variant="text" width="40%" height={20} />}
-                      />
-                      <Skeleton variant="circular" width={24} height={24} />
-                    </ListItem>
-                  ))}
-                </List>
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <CircularProgress />
+                </Box>
               ) : recentDocuments.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <DocumentIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                  <DocumentIcon sx={{ fontSize: 48, color: '#dadce0', mb: 2 }} />
                   <Typography color="text.secondary">No documents yet</Typography>
                 </Box>
               ) : (
                 <List>
-                  {recentDocuments.map((doc, index) => (
+                  {recentDocuments.map((doc) => (
                     <ListItem
                       key={doc._id}
-                      sx={{
-                        px: 0,
-                        '&:hover': { backgroundColor: 'rgba(139, 92, 246, 0.05)' }
-                      }}
+                      sx={{ px: 0 }}
                       secondaryAction={
-                        <IconButton
-                          size="small"
-                          onClick={(e) => handleMenuOpen(e, doc, 'document')}
-                        >
+                        <IconButton size="small">
                           <MoreVertIcon />
                         </IconButton>
                       }
                     >
                       <ListItemAvatar>
-                        <Avatar
-                          sx={{
-                            backgroundColor: getCategoryColor(doc.category),
-                            width: 40,
-                            height: 40
-                          }}
-                        >
+                        <Avatar sx={{ bgcolor: '#2874f0' }}>
                           <DocumentIcon />
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle2" noWrap>
-                              {doc.title}
-                            </Typography>
-                            <Chip
-                              label={doc.category}
-                              size="small"
-                              sx={{
-                                backgroundColor: getCategoryColor(doc.category),
-                                color: 'white',
-                                fontSize: '0.7rem'
-                              }}
-                            />
-                          </Box>
-                        }
-                        secondary={
-                          <Typography variant="caption" color="text.secondary">
-                            {new Date(doc.createdAt).toLocaleDateString()} • {doc.downloadCount || 0} downloads
-                          </Typography>
-                        }
+                        primary={doc.title}
+                        secondary={`${new Date(doc.createdAt).toLocaleDateString()} • ${doc.downloadCount || 0} downloads`}
                       />
                     </ListItem>
                   ))}
@@ -474,95 +268,52 @@ const AdminDashboard = () => {
 
         {/* Recent Users */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card elevation={0}>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 500, color: '#212121' }}>
                   Recent Users
                 </Typography>
                 <Button
                   size="small"
-                  onClick={() => navigate('/admin/users')}
-                  sx={{ color: '#8B5CF6' }}
+                  onClick={() => navigate('/app/admin/users')}
+                  sx={{ color: '#2874f0' }}
                 >
                   View All
                 </Button>
               </Box>
 
               {loading ? (
-                <List>
-                  {[1, 2, 3, 4, 5].map((item) => (
-                    <ListItem key={item} sx={{ px: 0 }}>
-                      <ListItemAvatar>
-                        <Skeleton variant="circular" width={40} height={40} />
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={<Skeleton variant="text" width="60%" height={24} />}
-                        secondary={<Skeleton variant="text" width="80%" height={20} />}
-                      />
-                      <Skeleton variant="circular" width={24} height={24} />
-                    </ListItem>
-                  ))}
-                </List>
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <CircularProgress />
+                </Box>
               ) : recentUsers.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <PeopleIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                  <PeopleIcon sx={{ fontSize: 48, color: '#dadce0', mb: 2 }} />
                   <Typography color="text.secondary">No users yet</Typography>
                 </Box>
               ) : (
                 <List>
-                  {recentUsers.map((user, index) => (
+                  {recentUsers.map((user) => (
                     <ListItem
                       key={user._id}
-                      sx={{
-                        px: 0,
-                        '&:hover': { backgroundColor: 'rgba(139, 92, 246, 0.05)' }
-                      }}
+                      sx={{ px: 0 }}
                       secondaryAction={
-                        <IconButton
+                        <Chip
+                          label={user.role}
                           size="small"
-                          onClick={(e) => handleMenuOpen(e, user, 'user')}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
+                          color={user.role === 'admin' ? 'primary' : 'default'}
+                        />
                       }
                     >
                       <ListItemAvatar>
-                        <Avatar
-                          sx={{
-                            background: user.role === 'admin' 
-                              ? 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)'
-                              : 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                            width: 40,
-                            height: 40
-                          }}
-                        >
+                        <Avatar sx={{ bgcolor: user.role === 'admin' ? '#2874f0' : '#878787' }}>
                           {user.username?.charAt(0).toUpperCase()}
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle2">
-                              {user.username}
-                            </Typography>
-                            <Chip
-                              label={user.role}
-                              size="small"
-                              variant="outlined"
-                              sx={{
-                                fontSize: '0.7rem',
-                                borderColor: user.role === 'admin' ? '#8B5CF6' : '#10B981',
-                                color: user.role === 'admin' ? '#8B5CF6' : '#10B981'
-                              }}
-                            />
-                          </Box>
-                        }
-                        secondary={
-                          <Typography variant="caption" color="text.secondary">
-                            {user.email} • Joined {new Date(user.createdAt).toLocaleDateString()}
-                          </Typography>
-                        }
+                        primary={user.username}
+                        secondary={`${user.email} • Joined ${new Date(user.createdAt).toLocaleDateString()}`}
                       />
                     </ListItem>
                   ))}
@@ -572,36 +323,6 @@ const AdminDashboard = () => {
           </Card>
         </Grid>
       </Grid>
-
-      {/* Context Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        PaperProps={{
-          sx: {
-            background: 'linear-gradient(135deg, #16213E 0%, #1A1A2E 100%)',
-            border: '1px solid rgba(139, 92, 246, 0.2)'
-          }
-        }}
-      >
-        {selectedItem?.type === 'document' && (
-          <MenuItem onClick={() => {
-            navigate(`/admin/documents`);
-            handleMenuClose();
-          }}>
-            View Document Details
-          </MenuItem>
-        )}
-        {selectedItem?.type === 'user' && (
-          <MenuItem onClick={() => {
-            navigate(`/admin/users`);
-            handleMenuClose();
-          }}>
-            View User Details
-          </MenuItem>
-        )}
-      </Menu>
     </Box>
   );
 };

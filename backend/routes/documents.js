@@ -1,13 +1,63 @@
 const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const Document = require('../models/Document');
+const AdminSettings = require('../models/AdminSettings');
 const { authenticateToken, requireAdmin, optionalAuth } = require('../middleware/auth');
 const { uploadDocument, deleteFromCloudinary } = require('../config/cloudinary');
 
 const router = express.Router();
 
-// Upload new document (Admin only)
-router.post('/upload', authenticateToken, requireAdmin, uploadDocument.single('document'), async (req, res) => {
+// Upload new document (Admin only) - Cloudinary only with 10MB limit
+router.post('/upload', authenticateToken, requireAdmin, (req, res, next) => {
+  uploadDocument.single('document')(req, res, (err) => {
+    if (err) {
+      console.error('❌ Upload error:', err.message);
+      
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ 
+          message: 'File too large. Maximum file size is 10MB (Cloudinary free plan limit).',
+          maxSize: '10MB',
+          actualLimit: '10,485,760 bytes',
+          error: 'FILE_TOO_LARGE',
+          suggestion: 'Please compress your file or use a smaller file.'
+        });
+      }
+      
+      if (err.message && err.message.includes('File size too large')) {
+        return res.status(413).json({ 
+          message: 'File exceeds Cloudinary free plan limit of 10MB.',
+          maxSize: '10MB',
+          error: 'CLOUDINARY_SIZE_LIMIT',
+          suggestion: 'Please use a file smaller than 10MB.'
+        });
+      }
+      
+      if (err.message && err.message.includes('Invalid file type')) {
+        return res.status(400).json({ 
+          message: 'Invalid file type. Only PDF, DOC, DOCX, TXT, and RTF files are allowed.',
+          error: 'INVALID_FILE_TYPE',
+          allowedTypes: ['PDF', 'DOC', 'DOCX', 'TXT', 'RTF']
+        });
+      }
+      
+      return res.status(400).json({ 
+        message: err.message || 'File upload failed',
+        error: 'UPLOAD_ERROR'
+      });
+    }
+    
+    console.log('✅ File uploaded to Cloudinary successfully');
+    if (req.file) {
+      console.log('📁 File info:', {
+        size: `${Math.round(req.file.size / 1024)}KB`,
+        name: req.file.originalname,
+        type: req.file.mimetype,
+        cloudinaryUrl: req.file.path
+      });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -90,7 +140,7 @@ router.post('/upload', authenticateToken, requireAdmin, uploadDocument.single('d
 router.get('/', optionalAuth, [
   query('page').optional().isInt({ min: 1 }),
   query('limit').optional().isInt({ min: 1, max: 100 }),
-  query('category').optional().isIn(['policy', 'procedure', 'manual', 'report', 'contract', 'other']),
+  query('category').optional().isLength({ min: 1 }),
   query('status').optional().isIn(['draft', 'published', 'archived']),
   query('search').optional().isLength({ min: 1 })
 ], async (req, res) => {
@@ -170,11 +220,15 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Document not available' });
     }
 
+    // Check admin settings for free access
+    const freeAccessEnabled = await AdminSettings.getSetting('free_document_access', false);
+    
     // All authenticated users can see document metadata
-    // But only premium users can view/download content
+    // But only premium users can view/download content (unless free access is enabled)
     const response = {
       document,
-      canView: req.user.isPremium || req.user.role === 'admin'
+      canView: freeAccessEnabled || req.user.isPremium || req.user.role === 'admin',
+      freeAccessEnabled: freeAccessEnabled
     };
 
     res.json(response);
@@ -188,7 +242,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, requireAdmin, [
   body('title').optional().trim().isLength({ min: 1, max: 200 }),
   body('description').optional().trim().isLength({ max: 1000 }),
-  body('category').optional().isIn(['policy', 'procedure', 'manual', 'report', 'contract', 'other']),
+  body('category').optional().trim().isLength({ min: 1 }),
   body('status').optional().isIn(['draft', 'published', 'archived'])
 ], async (req, res) => {
   try {
@@ -281,8 +335,11 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Document not available' });
     }
 
-    // Check premium access - only premium users and admins can download
-    if (!req.user.isPremium && req.user.role !== 'admin') {
+    // Check admin settings for free access
+    const freeAccessEnabled = await AdminSettings.getSetting('free_document_access', false);
+    
+    // Check premium access - only premium users and admins can download (unless free access is enabled)
+    if (!freeAccessEnabled && !req.user.isPremium && req.user.role !== 'admin') {
       return res.status(403).json({ 
         message: 'Premium access required',
         requiresPremium: true 
@@ -335,8 +392,11 @@ router.get('/:id/view', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Document not available' });
     }
 
-    // Check premium access - only premium users and admins can view
-    if (!req.user.isPremium && req.user.role !== 'admin') {
+    // Check admin settings for free access
+    const freeAccessEnabled = await AdminSettings.getSetting('free_document_access', false);
+    
+    // Check premium access - only premium users and admins can view (unless free access is enabled)
+    if (!freeAccessEnabled && !req.user.isPremium && req.user.role !== 'admin') {
       return res.status(403).json({ 
         message: 'Premium access required',
         requiresPremium: true 
@@ -393,8 +453,10 @@ router.get('/:id/proxy', async (req, res) => {
       return res.status(403).json({ message: 'Document not available' });
     }
 
-    // Check premium access
-    if (!user.isPremium && user.role !== 'admin') {
+    // Check premium access or free access setting
+    const freeAccessEnabled = await AdminSettings.getSetting('free_document_access', false);
+    
+    if (!freeAccessEnabled && !user.isPremium && user.role !== 'admin') {
       return res.status(403).json({ 
         message: 'Premium access required',
         requiresPremium: true 
@@ -403,6 +465,15 @@ router.get('/:id/proxy', async (req, res) => {
 
     console.log('📄 Proxying PDF:', document.title);
     console.log('🔗 Cloudinary URL:', document.file.url);
+
+    // Only handle Cloudinary URLs for deployment
+    if (!document.file.url.startsWith('https://res.cloudinary.com/')) {
+      console.error('❌ Non-Cloudinary URL detected:', document.file.url);
+      return res.status(500).json({ 
+        message: 'Document not available. Please re-upload to Cloudinary.',
+        code: 'NON_CLOUDINARY_URL'
+      });
+    }
 
     // Use axios to fetch from Cloudinary
     const axios = require('axios');

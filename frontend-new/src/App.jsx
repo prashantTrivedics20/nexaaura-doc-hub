@@ -22,6 +22,7 @@ import DocumentManagement from './pages/Admin/DocumentManagement';
 import UserManagement from './pages/Admin/UserManagement';
 import Analytics from './pages/Admin/Analytics';
 import CategoryManagement from './pages/Admin/CategoryManagement';
+import SystemSettings from './pages/Admin/SystemSettings';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -102,6 +103,14 @@ function App() {
                     element={
                       <ProtectedRoute adminOnly>
                         <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="admin/settings"
+                    element={
+                      <ProtectedRoute adminOnly>
+                        <SystemSettings />
                       </ProtectedRoute>
                     }
                   />

@@ -15,7 +15,7 @@ const documentSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['policy', 'procedure', 'manual', 'report', 'contract', 'other'],
+    trim: true,
     default: 'other'
   },
   tags: [{

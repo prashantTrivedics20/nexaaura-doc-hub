@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
 const mongoose = require('mongoose');
+const path = require('path');
 require('dotenv').config();
 
 // Import configurations and middleware
@@ -34,6 +35,8 @@ const documentRoutes = require('./routes/documents');
 const userRoutes = require('./routes/users');
 const categoryRoutes = require('./routes/categories');
 const paymentRoutes = require('./routes/payments');
+const adminSettingsRoutes = require('./routes/adminSettings');
+const statsRoutes = require('./routes/stats');
 
 const app = express();
 
@@ -77,8 +80,9 @@ app.use('/api/documents/upload', rateLimiters.upload);
 app.use('/api', rateLimiters.general);
 
 // Body parsing middleware with size limits
-app.use(express.json(requestLimits.json));
-app.use(express.urlencoded(requestLimits.urlencoded));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.raw({ limit: '10mb' }));
 
 // Input sanitization
 app.use(sanitizeInput);
@@ -117,6 +121,8 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/admin', adminSettingsRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

@@ -1,24 +1,25 @@
 {
-  "name": "nexa-doc-hub",
+  "name": "nexaura-document-hub",
   "version": "1.0.0",
-  "description": "Production-ready document management system with MERN stack",
+  "description": "Modern document management platform with React, Node.js, and MongoDB",
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
     "backend:dev": "cd backend && npm run dev",
-    "frontend:dev": "cd frontend && npm start",
+    "frontend:dev": "cd frontend-new && npm run dev",
     "backend:start": "cd backend && npm start",
-    "frontend:build": "cd frontend && npm run build",
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "test": "npm run backend:test && npm run frontend:test",
+    "frontend:build": "cd frontend-new && npm run build",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend-new && npm install",
+    "setup:admin": "node setup-admin.js",
+    "test": "npm run backend:test && npm run test:production",
+    "test:production": "node scripts/production-test.js",
     "backend:test": "cd backend && npm test",
-    "frontend:test": "cd frontend && npm test -- --watchAll=false",
     "lint": "npm run backend:lint && npm run frontend:lint",
     "backend:lint": "cd backend && npm run lint",
-    "frontend:lint": "cd frontend && npm run lint",
+    "frontend:lint": "cd frontend-new && npm run lint",
     "lint:fix": "npm run backend:lint:fix && npm run frontend:lint:fix",
     "backend:lint:fix": "cd backend && npm run lint:fix",
-    "frontend:lint:fix": "cd frontend && npm run lint:fix",
+    "frontend:lint:fix": "cd frontend-new && npm run lint:fix",
     "build": "npm run frontend:build",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
@@ -27,11 +28,13 @@
     "deploy:production": "./scripts/deploy.sh production",
     "deploy:staging": "./scripts/deploy.sh staging",
     "deploy:rollback": "./scripts/deploy.sh rollback",
-    "security:audit": "npm audit && cd backend && npm audit && cd ../frontend && npm audit",
-    "security:fix": "npm audit fix && cd backend && npm audit fix && cd ../frontend && npm audit fix"
+    "deploy:setup": "chmod +x scripts/setup.sh && ./scripts/setup.sh",
+    "security:audit": "npm audit && cd backend && npm audit && cd ../frontend-new && npm audit",
+    "security:fix": "npm audit fix && cd backend && npm audit fix && cd ../frontend-new && npm audit fix"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.0",
+    "axios": "^1.6.0"
   },
   "engines": {
     "node": ">=16.0.0",
@@ -39,13 +42,23 @@
   },
   "keywords": [
     "document-management",
-    "mern-stack",
     "react",
     "nodejs",
     "mongodb",
-    "cloudinary",
+    "material-ui",
+    "jwt-auth",
+    "file-upload",
+    "admin-panel",
     "production-ready"
   ],
-  "author": "Your Name",
-  "license": "MIT"
+  "author": "Nexaura IT Solutions",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nexaura/document-hub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nexaura/document-hub/issues"
+  },
+  "homepage": "https://github.com/nexaura/document-hub#readme"
 }

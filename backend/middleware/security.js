@@ -26,7 +26,7 @@ const rateLimiters = {
   // General API rate limit
   general: createRateLimiter(
     15 * 60 * 1000, // 15 minutes
-    100, // 100 requests per window
+    500, // 500 requests per window (increased for admin dashboard)
     'Too many requests from this IP, please try again later'
   ),
 
@@ -91,9 +91,9 @@ const sanitizeInput = [
 
 // Request size limits
 const requestLimits = {
-  json: { limit: '10mb' },
-  urlencoded: { limit: '10mb', extended: true },
-  raw: { limit: '50mb' } // For file uploads
+  json: { limit: '10mb' }, // Cloudinary free plan compatible
+  urlencoded: { limit: '10mb', extended: true }, // Cloudinary free plan compatible
+  raw: { limit: '10mb' } // For file uploads - Cloudinary free plan limit
 };
 
 // IP whitelist for admin operations (optional)

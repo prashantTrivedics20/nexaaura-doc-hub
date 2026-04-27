@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -10,874 +10,681 @@ import {
   CardContent,
   AppBar,
   Toolbar,
-  IconButton,
   useTheme,
   useMediaQuery,
-  Fade,
-  Grow,
-  Chip,
-  Avatar,
   Stack,
-  Divider,
   Paper,
-  LinearProgress,
-  Badge
+  IconButton,
+  Avatar,
+  Chip,
+  alpha,
 } from '@mui/material';
 import {
-  Code as CodeIcon,
-  School as SchoolIcon,
-  Speed as SpeedIcon,
+  Description as DocumentIcon,
   Security as SecurityIcon,
+  Speed as SpeedIcon,
   CloudUpload as CloudIcon,
-  Analytics as AnalyticsIcon,
-  Login as LoginIcon,
-  Menu as MenuIcon,
-  AutoStories as DocsIcon,
-  Rocket as RocketIcon,
-  Psychology as LearnIcon,
-  TrendingUp as GrowthIcon,
-  Star as StarIcon,
-  CheckCircle as CheckIcon,
   ArrowForward as ArrowForwardIcon,
-  Payment as PaymentIcon,
-  Timeline as TimelineIcon,
-  EmojiEvents as TrophyIcon,
-  Lightbulb as IdeaIcon
+  CheckCircle as CheckIcon,
+  Star as StarIcon,
+  Menu as MenuIcon,
+  TrendingUp as TrendingIcon,
+  People as PeopleIcon,
+  Verified as VerifiedIcon,
 } from '@mui/icons-material';
 
 const Landing = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [animationStep, setAnimationStep] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setAnimationStep(prev => (prev + 1) % 4);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
 
   const features = [
     {
-      icon: <RocketIcon sx={{ fontSize: 48 }} />,
-      title: 'Fast Track Learning',
-      description: 'Accelerated learning path designed for developers',
-      color: '#8B5CF6',
-      stats: '50+ Topics'
+      icon: <DocumentIcon sx={{ fontSize: 40 }} />,
+      title: 'Vast Library',
+      description: 'Access thousands of documents across multiple categories',
+      color: '#00bcd4',
     },
     {
-      icon: <TrophyIcon sx={{ fontSize: 48 }} />,
-      title: 'Industry Ready',
-      description: 'Real-world projects and interview preparation',
-      color: '#EC4899',
-      stats: '100+ Examples'
+      icon: <SecurityIcon sx={{ fontSize: 40 }} />,
+      title: 'Secure Storage',
+      description: 'Enterprise-grade security for all your documents',
+      color: '#4caf50',
     },
     {
-      icon: <IdeaIcon sx={{ fontSize: 48 }} />,
-      title: 'Expert Curated',
-      description: 'Content crafted by industry professionals',
-      color: '#10B981',
-      stats: '24/7 Access'
-    }
+      icon: <SpeedIcon sx={{ fontSize: 40 }} />,
+      title: 'Fast Access',
+      description: 'Quick search and instant document retrieval',
+      color: '#ff9800',
+    },
+    {
+      icon: <CloudIcon sx={{ fontSize: 40 }} />,
+      title: 'Cloud Powered',
+      description: 'Access your documents anywhere, anytime',
+      color: '#9c27b0',
+    },
   ];
 
-  const learningPath = [
-    {
-      phase: 'Foundation',
-      duration: '2-3 weeks',
-      topics: ['JavaScript Fundamentals', 'ES6+ Features', 'DOM Manipulation'],
-      color: '#8B5CF6',
-      progress: 100
-    },
-    {
-      phase: 'Frontend Mastery',
-      duration: '3-4 weeks', 
-      topics: ['React.js', 'State Management', 'Component Architecture'],
-      color: '#EC4899',
-      progress: 75
-    },
-    {
-      phase: 'Backend Development',
-      duration: '4-5 weeks',
-      topics: ['Node.js', 'Express.js', 'Database Design'],
-      color: '#10B981',
-      progress: 50
-    },
-    {
-      phase: 'DSA & System Design',
-      duration: '6-8 weeks',
-      topics: ['Algorithms', 'Data Structures', 'System Architecture'],
-      color: '#F59E0B',
-      progress: 25
-    }
+  const stats = [
+    { number: '10K+', label: 'Active Users', icon: <PeopleIcon /> },
+    { number: '50K+', label: 'Documents', icon: <DocumentIcon /> },
+    { number: '99.9%', label: 'Uptime', icon: <TrendingIcon /> },
+    { number: '4.9/5', label: 'Rating', icon: <StarIcon /> },
   ];
 
-  const technologies = [
-    { 
-      name: 'JavaScript', 
-      icon: '🟨', 
-      level: 'Beginner to Advanced',
-      description: 'Master modern JavaScript with ES6+, async programming, and advanced concepts',
-      popularity: 95
-    },
-    { 
-      name: 'React.js', 
-      icon: '⚛️', 
-      level: 'Intermediate',
-      description: 'Build dynamic UIs with hooks, context, and performance optimization',
-      popularity: 90
-    },
-    { 
-      name: 'Node.js', 
-      icon: '🟢', 
-      level: 'Intermediate',
-      description: 'Server-side development with Express, APIs, and microservices',
-      popularity: 85
-    },
-    { 
-      name: 'MongoDB', 
-      icon: '🍃', 
-      level: 'Beginner to Intermediate',
-      description: 'NoSQL database design, indexing, and performance optimization',
-      popularity: 80
-    },
-    { 
-      name: 'Next.js', 
-      icon: '▲', 
-      level: 'Advanced',
-      description: 'Full-stack React framework with SSR, SSG, and API routes',
-      popularity: 88
-    },
-    { 
-      name: 'DSA', 
-      icon: '🧠', 
-      level: 'All Levels',
-      description: 'Problem-solving skills for technical interviews and coding challenges',
-      popularity: 100
-    }
+  const benefits = [
+    'Unlimited document access',
+    'Advanced search capabilities',
+    'Organized by categories',
+    'Download support',
+    'Regular updates',
+    'Premium support',
   ];
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #0F0F23 0%, #1A1A2E 50%, #16213E 100%)',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      {/* Animated Background Elements */}
-      <Box sx={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        opacity: 0.1,
-        background: `
-          radial-gradient(circle at 20% 20%, #8B5CF6 0%, transparent 50%),
-          radial-gradient(circle at 80% 80%, #EC4899 0%, transparent 50%),
-          radial-gradient(circle at 40% 60%, #10B981 0%, transparent 50%)
-        `,
-        animation: 'pulse 4s ease-in-out infinite'
-      }} />
-
-      {/* Navigation Bar */}
-      <AppBar position="static" elevation={0} sx={{ 
-        background: 'rgba(15, 15, 35, 0.95)', 
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(139, 92, 246, 0.2)'
-      }}>
-        <Toolbar sx={{ py: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-            <Avatar sx={{ 
-              background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-              mr: 2,
-              width: 40,
-              height: 40
-            }}>
-              🚀
-            </Avatar>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1 }}>
-                Nexaura Developer Hub
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                Learn • Build • Excel
-              </Typography>
-            </Box>
-          </Box>
-          
-          {!isMobile && (
-            <Stack direction="row" spacing={2}>
-              <Chip 
-                label="🎯 Premium Content" 
-                size="small"
-                sx={{ 
-                  background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                  color: 'white',
-                  fontWeight: 600
-                }}
-              />
-              <Button
-                variant="outlined"
-                onClick={() => navigate('/signin')}
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f7fa' }}>
+      {/* Navigation */}
+      <AppBar position="sticky" elevation={0} sx={{ bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0' }}>
+        <Container maxWidth="xl">
+          <Toolbar sx={{ py: 1 }}>
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ flexGrow: 1 }}>
+              <Avatar
                 sx={{
-                  borderColor: '#8B5CF6',
-                  color: '#8B5CF6',
-                  '&:hover': {
-                    borderColor: '#A78BFA',
-                    backgroundColor: 'rgba(139, 92, 246, 0.1)'
-                  }
+                  bgcolor: '#00bcd4',
+                  width: 44,
+                  height: 44,
                 }}
               >
-                Sign In
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/signin')}
-                sx={{
-                  background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                  boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)'
-                }}
-              >
-                Get Started
-              </Button>
+                <DocumentIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#212121', lineHeight: 1 }}>
+                  Document Hub
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#616161' }}>
+                  Your Digital Library
+                </Typography>
+              </Box>
             </Stack>
-          )}
-        </Toolbar>
+            
+            {!isMobile && (
+              <Stack direction="row" spacing={2}>
+                <Button
+                  onClick={() => navigate('/signin')}
+                  sx={{ color: '#616161', textTransform: 'none', fontWeight: 500 }}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => navigate('/signin')}
+                  endIcon={<ArrowForwardIcon />}
+                  sx={{
+                    bgcolor: '#00bcd4',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    px: 3,
+                    '&:hover': { bgcolor: '#008ba3' }
+                  }}
+                >
+                  Get Started
+                </Button>
+              </Stack>
+            )}
+            
+            {isMobile && (
+              <IconButton>
+                <MenuIcon />
+              </IconButton>
+            )}
+          </Toolbar>
+        </Container>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: { xs: 4, md: 8 } }}>
-        {/* Hero Section */}
-        <Fade in timeout={1000}>
-          <Box sx={{ textAlign: 'center', mb: 10 }}>
-            <Chip 
-              label="🔥 Most Popular Developer Learning Platform" 
-              sx={{ 
-                mb: 3,
-                background: 'rgba(139, 92, 246, 0.1)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                color: '#8B5CF6'
-              }}
-            />
+      {/* Hero Section */}
+      <Box
+        sx={{
+          background: `linear-gradient(135deg, ${alpha('#00bcd4', 0.05)} 0%, ${alpha('#9c27b0', 0.05)} 100%)`,
+          pt: { xs: 6, md: 10 },
+          pb: { xs: 8, md: 12 },
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Decorative circles */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -100,
+            right: -100,
+            width: 400,
+            height: 400,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${alpha('#00bcd4', 0.1)} 0%, transparent 70%)`,
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: -150,
+            left: -150,
+            width: 500,
+            height: 500,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${alpha('#9c27b0', 0.1)} 0%, transparent 70%)`,
+          }}
+        />
+        
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+          <Grid container spacing={6} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <Chip
+                icon={<VerifiedIcon />}
+                label="Trusted by 10,000+ users worldwide"
+                sx={{
+                  mb: 3,
+                  bgcolor: alpha('#00bcd4', 0.1),
+                  color: '#00bcd4',
+                  fontWeight: 600,
+                  border: '1px solid',
+                  borderColor: alpha('#00bcd4', 0.3),
+                  py: 2.5,
+                }}
+              />
+              
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 700,
+                  mb: 3,
+                  color: '#212121',
+                  fontSize: { xs: '2.5rem', md: '3.5rem' }
+                }}
+              >
+                Your Complete{' '}
+                <Box component="span" sx={{ color: '#00bcd4' }}>
+                  Document Hub
+                </Box>
+              </Typography>
+              
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 4,
+                  color: '#616161',
+                  fontWeight: 400,
+                  lineHeight: 1.6,
+                }}
+              >
+                Access, organize, and manage all your documents in one powerful platform. 
+                Built for professionals who value efficiency.
+              </Typography>
+              
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
+                <Button
+                  variant="contained"
+                  size="large"
+                  endIcon={<ArrowForwardIcon />}
+                  onClick={() => navigate('/signin')}
+                  sx={{
+                    bgcolor: '#00bcd4',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    '&:hover': { bgcolor: '#008ba3' }
+                  }}
+                >
+                  Start Free Trial
+                </Button>
+                
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => navigate('/app/dashboard')}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    borderColor: '#00bcd4',
+                    color: '#00bcd4',
+                    '&:hover': {
+                      borderColor: '#008ba3',
+                      bgcolor: alpha('#00bcd4', 0.05),
+                    },
+                  }}
+                >
+                  View Demo
+                </Button>
+              </Stack>
+              
+              <Grid container spacing={3}>
+                {stats.map((stat, index) => (
+                  <Grid item xs={6} sm={3} key={index}>
+                    <Box>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+                        <Box sx={{ color: '#00bcd4' }}>{stat.icon}</Box>
+                        <Typography variant="h5" sx={{ fontWeight: 700, color: '#00bcd4' }}>
+                          {stat.number}
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body2" sx={{ color: '#616161', fontWeight: 500 }}>
+                        {stat.label}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
+            </Grid>
             
-            <Typography
-              variant="h1"
-              sx={{
-                fontWeight: 800,
-                mb: 3,
-                fontSize: { xs: '2.5rem', md: '4rem', lg: '5rem' },
-                lineHeight: 1.1,
-                background: 'linear-gradient(135deg, #FFFFFF 0%, #8B5CF6 50%, #EC4899 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}
-            >
-              Master Full Stack
-              <br />
-              Development
-            </Typography>
-            
-            <Typography
-              variant="h5"
-              color="text.secondary"
-              sx={{ 
-                mb: 6, 
-                maxWidth: 800, 
-                mx: 'auto',
-                lineHeight: 1.6,
-                fontWeight: 400
-              }}
-            >
-              From JavaScript fundamentals to advanced system design. 
-              <Box component="span" sx={{ color: '#8B5CF6', fontWeight: 600 }}>
-                {' '}Learn, Build, and Excel{' '}
-              </Box>
-              with our comprehensive developer curriculum.
-            </Typography>
+            <Grid item xs={12} md={6}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  borderRadius: 4,
+                  bgcolor: '#ffffff',
+                  border: '1px solid #e0e0e0',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
+                }}
+              >
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: 400,
+                    borderRadius: 2,
+                    bgcolor: alpha('#00bcd4', 0.05),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <DocumentIcon sx={{ fontSize: 120, color: alpha('#00bcd4', 0.3) }} />
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
 
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }} 
-              spacing={3} 
-              justifyContent="center"
-              sx={{ mb: 6 }}
+      {/* Features Section */}
+      <Box sx={{ py: 10, bgcolor: '#ffffff' }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: 8 }}>
+            <Typography
+              variant="overline"
+              sx={{
+                display: 'block',
+                mb: 2,
+                color: '#00bcd4',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                letterSpacing: 2,
+              }}
             >
+              POWERFUL FEATURES
+            </Typography>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                mb: 2,
+                color: '#212121',
+              }}
+            >
+              Everything you need
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                color: '#616161',
+                fontWeight: 400,
+                maxWidth: 700,
+                mx: 'auto',
+              }}
+            >
+              Powerful tools designed to make document management effortless
+            </Typography>
+          </Box>
+
+          <Grid container spacing={4}>
+            {features.map((feature, index) => (
+              <Grid item xs={12} sm={6} md={3} key={index}>
+                <Card
+                  elevation={0}
+                  sx={{
+                    height: '100%',
+                    p: 3,
+                    textAlign: 'center',
+                    border: '1px solid #e0e0e0',
+                    transition: 'all 0.3s',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: `0 12px 24px ${alpha(feature.color, 0.2)}`,
+                      borderColor: feature.color,
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      bgcolor: alpha(feature.color, 0.1),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 2,
+                      color: feature.color,
+                    }}
+                  >
+                    {feature.icon}
+                  </Box>
+                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#212121' }}>
+                    {feature.title}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#616161', lineHeight: 1.7 }}>
+                    {feature.description}
+                  </Typography>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Benefits Section */}
+      <Box sx={{ py: 10, bgcolor: alpha('#00bcd4', 0.03) }}>
+        <Container maxWidth="lg">
+          <Grid container spacing={8} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <Typography
+                variant="overline"
+                sx={{
+                  display: 'block',
+                  mb: 2,
+                  color: '#00bcd4',
+                  fontWeight: 700,
+                  letterSpacing: 2,
+                }}
+              >
+                WHY CHOOSE US
+              </Typography>
+              
+              <Typography
+                variant="h3"
+                sx={{
+                  fontWeight: 700,
+                  mb: 3,
+                  color: '#212121',
+                }}
+              >
+                Built for modern teams
+              </Typography>
+              
+              <Typography
+                variant="body1"
+                sx={{
+                  mb: 4,
+                  color: '#616161',
+                  lineHeight: 1.8,
+                  fontSize: '1.1rem',
+                }}
+              >
+                Join thousands of professionals who trust our platform for document management.
+              </Typography>
+              
+              <Stack spacing={2}>
+                {benefits.map((benefit, index) => (
+                  <Stack key={index} direction="row" spacing={2} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        bgcolor: alpha('#4caf50', 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <CheckIcon sx={{ color: '#4caf50', fontSize: 18 }} />
+                    </Box>
+                    <Typography variant="body1" sx={{ color: '#212121', fontWeight: 500 }}>
+                      {benefit}
+                    </Typography>
+                  </Stack>
+                ))}
+              </Stack>
+              
               <Button
                 variant="contained"
                 size="large"
-                endIcon={<RocketIcon />}
                 onClick={() => navigate('/signin')}
                 sx={{
-                  px: 6,
-                  py: 2,
-                  fontSize: '1.2rem',
+                  mt: 4,
+                  bgcolor: '#00bcd4',
+                  textTransform: 'none',
                   fontWeight: 600,
-                  background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                  boxShadow: '0 8px 32px rgba(139, 92, 246, 0.4)',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 12px 40px rgba(139, 92, 246, 0.6)'
-                  },
-                  transition: 'all 0.3s ease'
+                  px: 4,
+                  '&:hover': { bgcolor: '#008ba3' }
                 }}
               >
-                Start Learning Journey
+                Get Started Now
+              </Button>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 4,
+                  textAlign: 'center',
+                  bgcolor: '#ffffff',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 4,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    bgcolor: alpha('#ff9800', 0.1),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mx: 'auto',
+                    mb: 3,
+                  }}
+                >
+                  <StarIcon sx={{ fontSize: 40, color: '#ff9800' }} />
+                </Box>
+                <Typography variant="h3" sx={{ fontWeight: 700, color: '#ff9800', mb: 2 }}>
+                  4.9/5
+                </Typography>
+                <Typography variant="h6" sx={{ color: '#212121', mb: 3, fontWeight: 600 }}>
+                  Average Rating
+                </Typography>
+                <Typography variant="body1" sx={{ color: '#616161', mb: 3 }}>
+                  Based on 2,500+ reviews from satisfied users
+                </Typography>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    bgcolor: alpha('#00bcd4', 0.05),
+                    borderRadius: 2,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ color: '#616161', fontStyle: 'italic', mb: 2, lineHeight: 1.7 }}>
+                    "This platform has completely transformed how we manage documents. 
+                    Fast, reliable, and incredibly easy to use."
+                  </Typography>
+                  <Typography variant="subtitle2" sx={{ color: '#00bcd4', fontWeight: 600 }}>
+                    Sarah Johnson, Product Manager
+                  </Typography>
+                </Paper>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* CTA Section */}
+      <Box
+        sx={{
+          py: 10,
+          bgcolor: '#00bcd4',
+          color: '#ffffff',
+        }}
+      >
+        <Container maxWidth="md">
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                mb: 2,
+              }}
+            >
+              Ready to get started?
+            </Typography>
+            
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 4,
+                fontWeight: 400,
+                opacity: 0.95,
+              }}
+            >
+              Join thousands of users managing their documents efficiently
+            </Typography>
+            
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => navigate('/signin')}
+                sx={{
+                  bgcolor: '#ffffff',
+                  color: '#00bcd4',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 4,
+                  py: 1.5,
+                  '&:hover': {
+                    bgcolor: '#f5f7fa',
+                  },
+                }}
+              >
+                Start Free Trial
               </Button>
               
               <Button
                 variant="outlined"
                 size="large"
-                startIcon={<DocsIcon />}
                 onClick={() => navigate('/app/dashboard')}
                 sx={{
-                  px: 6,
-                  py: 2,
-                  fontSize: '1.2rem',
-                  borderColor: '#8B5CF6',
-                  color: '#8B5CF6',
+                  borderColor: '#ffffff',
+                  color: '#ffffff',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 4,
+                  py: 1.5,
                   '&:hover': {
-                    borderColor: '#A78BFA',
-                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                    transform: 'translateY(-2px)'
+                    borderColor: '#ffffff',
+                    bgcolor: alpha('#ffffff', 0.1),
                   },
-                  transition: 'all 0.3s ease'
                 }}
               >
-                Explore Content
+                View Demo
               </Button>
             </Stack>
-
-            {/* Stats */}
-            <Grid container spacing={4} justifyContent="center">
-              {[
-                { number: '500+', label: 'Learning Resources' },
-                { number: '50+', label: 'Code Examples' },
-                { number: '24/7', label: 'Access' }
-              ].map((stat, index) => (
-                <Grid item key={index}>
-                  <Box sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#8B5CF6' }}>
-                      {stat.number}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {stat.label}
-                    </Typography>
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
           </Box>
-        </Fade>
+        </Container>
+      </Box>
 
-        {/* Features Section */}
-        <Grow in timeout={1500}>
-          <Box sx={{ mb: 12 }}>
-            <Typography
-              variant="h3"
-              sx={{
-                textAlign: 'center',
-                fontWeight: 700,
-                mb: 2,
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}
-            >
-              Why Choose Nexaura?
-            </Typography>
-            
-            <Typography
-              variant="h6"
-              color="text.secondary"
-              sx={{ textAlign: 'center', mb: 6, maxWidth: 600, mx: 'auto' }}
-            >
-              Designed by developers, for developers. Experience the difference.
-            </Typography>
-
-            <Grid container spacing={4}>
-              {features.map((feature, index) => (
-                <Grid item xs={12} md={4} key={index}>
-                  <Grow in timeout={1000 + index * 200}>
-                    <Card
-                      sx={{
-                        height: '100%',
-                        background: 'linear-gradient(135deg, rgba(22, 33, 62, 0.8) 0%, rgba(26, 26, 46, 0.8) 100%)',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(139, 92, 246, 0.2)',
-                        borderRadius: 3,
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        '&:hover': {
-                          transform: 'translateY(-12px) scale(1.02)',
-                          boxShadow: `0 20px 60px rgba(139, 92, 246, 0.3)`,
-                          borderColor: feature.color,
-                          '& .feature-icon': {
-                            transform: 'scale(1.1) rotate(5deg)'
-                          }
-                        }
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: 0,
-                          right: 0,
-                          width: 100,
-                          height: 100,
-                          background: `linear-gradient(135deg, ${feature.color}20 0%, transparent 70%)`,
-                          borderRadius: '0 0 0 100px'
-                        }}
-                      />
-                      
-                      <CardContent sx={{ p: 4, textAlign: 'center', position: 'relative' }}>
-                        <Box
-                          className="feature-icon"
-                          sx={{
-                            width: 80,
-                            height: 80,
-                            borderRadius: '50%',
-                            background: `linear-gradient(135deg, ${feature.color} 0%, ${feature.color}CC 100%)`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            mx: 'auto',
-                            mb: 3,
-                            color: 'white',
-                            transition: 'all 0.3s ease',
-                            boxShadow: `0 8px 32px ${feature.color}40`
-                          }}
-                        >
-                          {feature.icon}
-                        </Box>
-                        
-                        <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-                          {feature.title}
-                        </Typography>
-                        
-                        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                          {feature.description}
-                        </Typography>
-                        
-                        <Chip
-                          label={feature.stats}
-                          size="small"
-                          sx={{
-                            background: `${feature.color}20`,
-                            color: feature.color,
-                            border: `1px solid ${feature.color}40`,
-                            fontWeight: 600
-                          }}
-                        />
-                      </CardContent>
-                    </Card>
-                  </Grow>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        </Grow>
-
-        {/* Learning Path Section */}
-        <Box sx={{ mb: 12 }}>
-          <Typography
-            variant="h3"
-            sx={{
-              textAlign: 'center',
-              fontWeight: 700,
-              mb: 2,
-              background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}
-          >
-            Your Learning Journey
-          </Typography>
-          
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{ textAlign: 'center', mb: 8, maxWidth: 600, mx: 'auto' }}
-          >
-            Structured curriculum designed to take you from beginner to expert
-          </Typography>
-
-          <Grid container spacing={3}>
-            {learningPath.map((phase, index) => (
-              <Grid item xs={12} md={6} lg={3} key={index}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    background: 'linear-gradient(135deg, rgba(22, 33, 62, 0.8) 0%, rgba(26, 26, 46, 0.8) 100%)',
-                    backdropFilter: 'blur(10px)',
-                    border: `2px solid ${phase.color}40`,
-                    borderRadius: 3,
-                    position: 'relative',
-                    overflow: 'hidden',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      borderColor: phase.color,
-                      boxShadow: `0 16px 48px ${phase.color}30`
-                    }
-                  }}
-                >
-                  <Box
-                    sx={{
-                      height: 4,
-                      background: `linear-gradient(90deg, ${phase.color} 0%, ${phase.color}60 100%)`
-                    }}
-                  />
-                  
-                  <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar
-                        sx={{
-                          background: `linear-gradient(135deg, ${phase.color} 0%, ${phase.color}CC 100%)`,
-                          width: 32,
-                          height: 32,
-                          mr: 2,
-                          fontSize: '1rem',
-                          fontWeight: 700
-                        }}
-                      >
-                        {index + 1}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1 }}>
-                          {phase.phase}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {phase.duration}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    
-                    <Box sx={{ mb: 3 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={phase.progress}
-                        sx={{
-                          height: 6,
-                          borderRadius: 3,
-                          backgroundColor: `${phase.color}20`,
-                          '& .MuiLinearProgress-bar': {
-                            backgroundColor: phase.color,
-                            borderRadius: 3
-                          }
-                        }}
-                      />
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                        {phase.progress}% Complete
-                      </Typography>
-                    </Box>
-                    
-                    <Stack spacing={1}>
-                      {phase.topics.map((topic, topicIndex) => (
-                        <Box key={topicIndex} sx={{ display: 'flex', alignItems: 'center' }}>
-                          <CheckIcon sx={{ fontSize: 16, color: phase.color, mr: 1 }} />
-                          <Typography variant="body2" color="text.secondary">
-                            {topic}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Technologies Section */}
-        <Box sx={{ mb: 12 }}>
-          <Typography
-            variant="h3"
-            sx={{
-              textAlign: 'center',
-              fontWeight: 700,
-              mb: 2,
-              background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}
-          >
-            Master Modern Technologies
-          </Typography>
-          
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{ textAlign: 'center', mb: 8, maxWidth: 600, mx: 'auto' }}
-          >
-            Industry-standard technologies with hands-on projects and real-world examples
-          </Typography>
-
+      {/* Footer */}
+      <Box sx={{ py: 6, bgcolor: '#212121', color: '#ffffff' }}>
+        <Container maxWidth="lg">
           <Grid container spacing={4}>
-            {technologies.map((tech, index) => (
-              <Grid item xs={12} md={6} lg={4} key={index}>
-                <Card
+            <Grid item xs={12} md={4}>
+              <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+                <Avatar
                   sx={{
-                    height: '100%',
-                    background: 'linear-gradient(135deg, rgba(22, 33, 62, 0.6) 0%, rgba(26, 26, 46, 0.6) 100%)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(139, 92, 246, 0.2)',
-                    borderRadius: 3,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      borderColor: 'rgba(139, 92, 246, 0.5)',
-                      boxShadow: '0 12px 40px rgba(139, 92, 246, 0.2)',
-                      transform: 'translateY(-4px)'
-                    }
+                    bgcolor: '#00bcd4',
+                    width: 40,
+                    height: 40,
                   }}
                 >
-                  <CardContent sx={{ p: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                      <Typography variant="h3" sx={{ mr: 2 }}>
-                        {tech.icon}
-                      </Typography>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-                          {tech.name}
-                        </Typography>
-                        <Chip
-                          label={tech.level}
-                          size="small"
-                          sx={{
-                            background: 'rgba(139, 92, 246, 0.1)',
-                            color: '#8B5CF6',
-                            border: '1px solid rgba(139, 92, 246, 0.3)',
-                            fontSize: '0.7rem'
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                    
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
-                      {tech.description}
-                    </Typography>
-                    
-                    <Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography variant="caption" color="text.secondary">
-                          Industry Demand
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 600 }}>
-                          {tech.popularity}%
-                        </Typography>
-                      </Box>
-                      <LinearProgress
-                        variant="determinate"
-                        value={tech.popularity}
-                        sx={{
-                          height: 4,
-                          borderRadius: 2,
-                          backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                          '& .MuiLinearProgress-bar': {
-                            backgroundColor: '#10B981',
-                            borderRadius: 2
-                          }
-                        }}
-                      />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Pricing Section */}
-        <Box sx={{ mb: 12 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
-              border: '2px solid rgba(139, 92, 246, 0.3)',
-              borderRadius: 4,
-              p: 6,
-              textAlign: 'center',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            <Box
-              sx={{
-                position: 'absolute',
-                top: -50,
-                right: -50,
-                width: 200,
-                height: 200,
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                borderRadius: '50%',
-                opacity: 0.1
-              }}
-            />
-            
-            <Chip
-              label="🎉 Limited Time Offer"
-              sx={{
-                mb: 3,
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                color: 'white',
-                fontWeight: 600,
-                fontSize: '0.9rem'
-              }}
-            />
-            
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 700,
-                mb: 2,
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}
-            >
-              Unlock Everything for Just ₹30
-            </Typography>
-            
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
-              One-time payment • Lifetime access • No hidden fees • No subscriptions
-            </Typography>
-            
-            <Grid container spacing={3} justifyContent="center" sx={{ mb: 6 }}>
-              {[
-                { icon: '📚', text: '500+ Learning Resources' },
-                { icon: '💻', text: '50+ Code Examples' },
-                { icon: '🎯', text: 'Interview Preparation' },
-                { icon: '🚀', text: 'Project Templates' },
-                { icon: '📱', text: 'Mobile Responsive' },
-                { icon: '⚡', text: 'Instant Access' }
-              ].map((feature, index) => (
-                <Grid item xs={6} sm={4} md={2} key={index}>
-                  <Box sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" sx={{ mb: 1 }}>
-                      {feature.icon}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {feature.text}
-                    </Typography>
-                  </Box>
-                </Grid>
-              ))}
+                  <DocumentIcon />
+                </Avatar>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Document Hub
+                </Typography>
+              </Stack>
+              <Typography variant="body2" sx={{ color: '#9e9e9e', lineHeight: 1.7 }}>
+                Your complete document management solution
+              </Typography>
             </Grid>
             
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => navigate('/signin')}
-              sx={{
-                px: 8,
-                py: 3,
-                fontSize: '1.3rem',
-                fontWeight: 700,
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-                boxShadow: '0 8px 32px rgba(139, 92, 246, 0.4)',
-                '&:hover': {
-                  transform: 'translateY(-3px)',
-                  boxShadow: '0 12px 48px rgba(139, 92, 246, 0.6)'
-                },
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Get Lifetime Access - ₹30
-            </Button>
+            <Grid item xs={12} md={4}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                Product
+              </Typography>
+              <Stack spacing={1}>
+                {['Features', 'Pricing', 'Security', 'Updates'].map((item) => (
+                  <Typography
+                    key={item}
+                    variant="body2"
+                    sx={{
+                      color: '#9e9e9e',
+                      cursor: 'pointer',
+                      '&:hover': { color: '#00bcd4' },
+                    }}
+                  >
+                    {item}
+                  </Typography>
+                ))}
+              </Stack>
+            </Grid>
             
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              💳 Secure payment • 🔒 Instant activation • ❌ No refunds
+            <Grid item xs={12} md={4}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                Company
+              </Typography>
+              <Stack spacing={1}>
+                {['About', 'Contact', 'Privacy', 'Terms'].map((item) => (
+                  <Typography
+                    key={item}
+                    variant="body2"
+                    sx={{
+                      color: '#9e9e9e',
+                      cursor: 'pointer',
+                      '&:hover': { color: '#00bcd4' },
+                    }}
+                  >
+                    {item}
+                  </Typography>
+                ))}
+              </Stack>
+            </Grid>
+          </Grid>
+          
+          <Box sx={{ mt: 4, pt: 4, borderTop: '1px solid #424242', textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
+              © 2024 Document Hub. All rights reserved.
             </Typography>
-          </Paper>
-        </Box>
-
-        {/* Footer */}
-        <Box sx={{ 
-          textAlign: 'center', 
-          py: 6, 
-          borderTop: '1px solid rgba(139, 92, 246, 0.2)',
-          background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.8) 0%, rgba(26, 26, 46, 0.8) 100%)',
-          borderRadius: 3,
-          backdropFilter: 'blur(10px)'
-        }}>
-          <Avatar sx={{ 
-            background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-            width: 60,
-            height: 60,
-            mx: 'auto',
-            mb: 3,
-            fontSize: '1.5rem'
-          }}>
-            🚀
-          </Avatar>
-          
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-            Nexaura Developer Hub
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Empowering developers with world-class learning resources
-          </Typography>
-          
-          <Divider sx={{ borderColor: 'rgba(139, 92, 246, 0.2)', mb: 3 }} />
-          
-          <Stack direction="row" spacing={3} justifyContent="center" sx={{ mb: 3 }}>
-            <Button
-              variant="text"
-              href="https://www.nexaurait.online/"
-              target="_blank"
-              sx={{ 
-                color: '#8B5CF6',
-                '&:hover': { backgroundColor: 'rgba(139, 92, 246, 0.1)' }
-              }}
-            >
-              🌐 Company Website
-            </Button>
-            <Button
-              variant="text"
-              href="https://www.linkedin.com/company/114344571/"
-              target="_blank"
-              sx={{ 
-                color: '#8B5CF6',
-                '&:hover': { backgroundColor: 'rgba(139, 92, 246, 0.1)' }
-              }}
-            >
-              💼 LinkedIn
-            </Button>
-            <Button
-              variant="text"
-              href="mailto:nexaaurait@gmail.com"
-              sx={{ 
-                color: '#8B5CF6',
-                '&:hover': { backgroundColor: 'rgba(139, 92, 246, 0.1)' }
-              }}
-            >
-              📧 Support
-            </Button>
-          </Stack>
-          
-          <Typography variant="body2" color="text.secondary">
-            © 2026 Nexaura IT Solutions. All rights reserved.
-          </Typography>
-          
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-            Made with ❤️ for developers, by developers
-          </Typography>
-        </Box>
-      </Container>
-      
-      {/* CSS for animations */}
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 0.1; }
-          50% { opacity: 0.2; }
-        }
-      `}</style>
+          </Box>
+        </Container>
+      </Box>
     </Box>
   );
 };
